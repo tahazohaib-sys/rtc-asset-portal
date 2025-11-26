@@ -487,7 +487,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# Style
 st.markdown(
     """
     <style>
@@ -528,13 +527,6 @@ st.markdown(
         background: rgba(15,23,42,0.95);
         border-color: rgba(59,130,246,0.7);
     }
-    /* active label (Streamlit dark theme uses this class on selected radio text) */
-    section[data-testid="stSidebar"] div[role="radiogroup"] > label span {
-        font-weight: 400;
-    }
-    section[data-testid="stSidebar"] div[role="radiogroup"] > label[data-baseweb="radio"] > div:first-child {
-        display:none; /* hide circle if present */
-    }
 
     /* Header */
     .rtc-header {
@@ -566,52 +558,23 @@ st.markdown(
         color: #9ca3af;
     }
 
-    /* Generic buttons (forms etc.) */
+    /* Generic buttons */
     div.stButton > button {
-        border-radius: 999px;
-        padding: 0.35rem 1.0rem;
-        border: 1px solid rgba(59,130,246,0.7);
-        background: radial-gradient(circle at top left, #1d4ed8 0, #1d3a8a 40%, #020617 100%);
-        color: #e5e7eb;
-        font-weight: 500;
-        font-size: 0.9rem;
-        box-shadow: 0 10px 30px rgba(37,99,235,0.55);
-        cursor: pointer;
-    }
-    div.stButton > button:hover {
-        border-color: #38bdf8;
-        box-shadow: 0 16px 40px rgba(56,189,248,0.6);
-        transform: translateY(-1px);
-    }
-
-    /* Stat cards on dashboard */
-    .rtc-stat-btn > button {
-        width: 100%;
-        text-align: left;
-        justify-content: flex-start;
-        padding: 0.85rem 1.1rem 0.9rem 1.1rem;
         border-radius: 1.1rem;
+        padding: 0.8rem 1.1rem;
         border: 1px solid rgba(148,163,184,0.4);
         background: radial-gradient(circle at top left, #1f2937 0, #020617 65%);
+        color: #e5e7eb;
+        font-weight: 500;
+        font-size: 0.98rem;
         box-shadow: 0 18px 40px rgba(15,23,42,0.8);
-        font-size: 0.85rem;
-        line-height: 1.4;
+        cursor: pointer;
+        text-align: left;
     }
-    .rtc-stat-btn > button:hover {
+    div.stButton > button:hover {
         border-color: rgba(56,189,248,0.9);
         box-shadow: 0 22px 50px rgba(56,189,248,0.35);
-    }
-    .rtc-stat-title {
-        display:block;
-        color:#9ca3af;
-        font-size:0.82rem;
-        margin-bottom:0.1rem;
-    }
-    .rtc-stat-value {
-        display:block;
-        color:#f9fafb;
-        font-size:1.6rem;
-        font-weight:700;
+        transform: translateY(-1px);
     }
 
     /* Dataframes */
@@ -623,6 +586,7 @@ st.markdown(
     }
 
     hr { border-color: rgba(55,65,81,0.7); }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -665,72 +629,23 @@ if menu == "Dashboard":
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        # Total Assets → all assets
-        label = (
-            f"<span class='rtc-stat-title'>Total Assets</span>"
-            f"<span class='rtc-stat-value'>{stats['total_assets']:,}</span>"
-        )
-        if st.button(
-            label,
-            key="card_total_assets",
-            help="Show list of all assets",
-            type="secondary",
-        ):
+        label = f"Total Assets\n{stats['total_assets']:,}"
+        if st.button(label, key="card_total_assets", help="Show list of all assets"):
             card_clicked = "all"
-        st.markdown(
-            "<style>div[data-testid='stButton'][key='card_total_assets'] {margin-bottom:0}</style>",
-            unsafe_allow_html=True,
-        )
     with c2:
-        label = (
-            f"<span class='rtc-stat-title'>Total Assets Amount</span>"
-            f"<span class='rtc-stat-value'>{stats['total_amount']:,.0f}</span>"
-        )
-        if st.button(
-            label,
-            key="card_total_amount",
-            help="Show list of all assets",
-            type="secondary",
-        ):
+        label = f"Total Assets Amount\n{stats['total_amount']:,.0f}"
+        if st.button(label, key="card_total_amount", help="Show list of all assets"):
             card_clicked = "all"
-        st.markdown(
-            "<style>div[data-testid='stButton'][key='card_total_amount'] {margin-bottom:0}</style>",
-            unsafe_allow_html=True,
-        )
     with c3:
-        label = (
-            f"<span class='rtc-stat-title'>Total Allocated Laptops</span>"
-            f"<span class='rtc-stat-value'>{stats['total_allocated_laptops']:,}</span>"
-        )
-        if st.button(
-            label,
-            key="card_allocated",
-            help="Show laptops currently allocated to employees",
-            type="secondary",
-        ):
+        label = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
+        if st.button(label, key="card_allocated", help="Show laptops currently allocated"):
             card_clicked = "allocated"
-        st.markdown(
-            "<style>div[data-testid='stButton'][key='card_allocated'] {margin-bottom:0}</style>",
-            unsafe_allow_html=True,
-        )
     with c4:
-        label = (
-            f"<span class='rtc-stat-title'>Laptops in Stock</span>"
-            f"<span class='rtc-stat-value'>{stats['laptops_in_stock']:,}</span>"
-        )
-        if st.button(
-            label,
-            key="card_stock",
-            help="Show laptops currently in stock",
-            type="secondary",
-        ):
+        label = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
+        if st.button(label, key="card_stock", help="Show laptops currently in stock"):
             card_clicked = "stock"
-        st.markdown(
-            "<style>div[data-testid='stButton'][key='card_stock'] {margin-bottom:0}</style>",
-            unsafe_allow_html=True,
-        )
 
-    # apply stat-card styling (wrapper divs)
+    # Equal width for stat buttons
     st.markdown(
         """
         <style>
@@ -745,20 +660,13 @@ if menu == "Dashboard":
         div[data-testid="stButton"][key="card_allocated"] > button,
         div[data-testid="stButton"][key="card_stock"] > button {
             width: 100%;
-            text-align:left;
-        }
-        div[data-testid="stButton"][key="card_total_assets"] > button > div,
-        div[data-testid="stButton"][key="card_total_amount"] > button > div,
-        div[data-testid="stButton"][key="card_allocated"] > button > div,
-        div[data-testid="stButton"][key="card_stock"] > button > div {
-            width:100%;
+            white-space: pre-line; /* respect \n in labels */
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # track which detail view user wants
     if card_clicked:
         st.session_state["dashboard_view"] = card_clicked
 
