@@ -5,11 +5,10 @@ RTC League - Asset Management Portal (Python + Streamlit + SQLite)
 
 Features:
 - Dashboard:
-    - Total Assets
+    - Total Assets (clickable → list of all assets)
     - Total Assets Amount
-    - Total Allocated Laptops
-    - Laptops in Stock
-    - Click to show tables (Allocated Laptops / Laptops / Office Equipment)
+    - Total Allocated Laptops (clickable → list of allocated laptops)
+    - Laptops in Stock (clickable → list of laptops in stock)
 - Assets:
     - View Laptops / Office Equipment with current holder & status
     - View Movement History per Asset
@@ -267,6 +266,16 @@ def get_assets_by_type(snapshot: pd.DataFrame, asset_type: str) -> pd.DataFrame:
     return df
 
 
+def get_laptops_in_stock(snapshot: pd.DataFrame) -> pd.DataFrame:
+    """Laptops where holder is stock or status is 'In Stock'."""
+    if snapshot.empty:
+        return snapshot
+    is_laptop = snapshot["asset_type"].str.lower().eq("laptop")
+    is_stock = snapshot["current_holder_type"].str.lower().eq("stock")
+    is_in_stock = snapshot["status"].str.lower().eq("in stock")
+    return snapshot[is_laptop & (is_stock | is_in_stock)].copy()
+
+
 # ---------------------- BUSINESS ACTIONS ---------------------- #
 
 def add_asset(
@@ -478,11 +487,10 @@ st.set_page_config(
     layout="wide",
 )
 
-# Global styling
+# Style
 st.markdown(
     """
     <style>
-    /* App background & base typography */
     .stApp {
         background: radial-gradient(circle at top left, #111827 0, #020617 40%, #020617 100%);
         color: #e5e7eb;
@@ -491,15 +499,44 @@ st.markdown(
 
     /* Sidebar */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #020617 0%, #020617 35%, #020617 100%);
+        background: #020617;
         border-right: 1px solid rgba(148,163,184,0.35);
     }
-    section[data-testid="stSidebar"] .css-1d391kg, 
-    section[data-testid="stSidebar"] .css-18e3th9 {
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
         padding-top: 1rem;
     }
 
-    /* Header block */
+    /* Radio → card-style nav */
+    section[data-testid="stSidebar"] input[type="radio"] {
+        visibility: hidden;
+        width: 0;
+        height: 0;
+        margin: 0;
+        padding: 0;
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label {
+        display: block;
+        padding: 0.55rem 0.85rem;
+        margin-bottom: 0.25rem;
+        border-radius: 999px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.18s ease-out;
+        font-size: 0.9rem;
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
+        background: rgba(15,23,42,0.95);
+        border-color: rgba(59,130,246,0.7);
+    }
+    /* active label (Streamlit dark theme uses this class on selected radio text) */
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label span {
+        font-weight: 400;
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label[data-baseweb="radio"] > div:first-child {
+        display:none; /* hide circle if present */
+    }
+
+    /* Header */
     .rtc-header {
         padding: 1.4rem 0 1.1rem 0;
     }
@@ -529,28 +566,10 @@ st.markdown(
         color: #9ca3af;
     }
 
-    /* Metric cards */
-    div[data-testid="metric-container"] {
-        background: radial-gradient(circle at top left, #1f2937 0, #020617 65%);
-        border-radius: 1.1rem;
-        padding: 1rem 1.2rem;
-        border: 1px solid rgba(148,163,184,0.35);
-        box-shadow: 0 20px 45px rgba(15,23,42,0.75);
-    }
-    div[data-testid="metric-container"] label {
-        color: #9ca3af !important;
-        font-size: 0.85rem;
-    }
-    div[data-testid="metric-container"] .metric-value {
-        font-size: 1.6rem !important;
-        font-weight: 700 !important;
-        color: #e5e7eb !important;
-    }
-
-    /* Buttons */
+    /* Generic buttons (forms etc.) */
     div.stButton > button {
         border-radius: 999px;
-        padding: 0.45rem 1.1rem;
+        padding: 0.35rem 1.0rem;
         border: 1px solid rgba(59,130,246,0.7);
         background: radial-gradient(circle at top left, #1d4ed8 0, #1d3a8a 40%, #020617 100%);
         color: #e5e7eb;
@@ -565,7 +584,37 @@ st.markdown(
         transform: translateY(-1px);
     }
 
-    /* Tables / dataframes */
+    /* Stat cards on dashboard */
+    .rtc-stat-btn > button {
+        width: 100%;
+        text-align: left;
+        justify-content: flex-start;
+        padding: 0.85rem 1.1rem 0.9rem 1.1rem;
+        border-radius: 1.1rem;
+        border: 1px solid rgba(148,163,184,0.4);
+        background: radial-gradient(circle at top left, #1f2937 0, #020617 65%);
+        box-shadow: 0 18px 40px rgba(15,23,42,0.8);
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    .rtc-stat-btn > button:hover {
+        border-color: rgba(56,189,248,0.9);
+        box-shadow: 0 22px 50px rgba(56,189,248,0.35);
+    }
+    .rtc-stat-title {
+        display:block;
+        color:#9ca3af;
+        font-size:0.82rem;
+        margin-bottom:0.1rem;
+    }
+    .rtc-stat-value {
+        display:block;
+        color:#f9fafb;
+        font-size:1.6rem;
+        font-weight:700;
+    }
+
+    /* Dataframes */
     .stDataFrame, .stTable {
         border-radius: 0.9rem;
         overflow: hidden;
@@ -573,10 +622,7 @@ st.markdown(
         box-shadow: 0 18px 40px rgba(15,23,42,0.85);
     }
 
-    /* Horizontal rule */
-    hr {
-        border-color: rgba(55,65,81,0.7);
-    }
+    hr { border-color: rgba(55,65,81,0.7); }
     </style>
     """,
     unsafe_allow_html=True,
@@ -599,6 +645,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Navigation
 menu = st.sidebar.radio(
     "Navigation",
     ["Dashboard", "Assets", "Add Asset", "Allocate", "Return / Transfer / Scrap", "Employees"],
@@ -606,107 +653,207 @@ menu = st.sidebar.radio(
 
 snapshot_df = get_snapshot(conn)
 
+# Keep state for which dashboard detail is shown
+if "dashboard_view" not in st.session_state:
+    st.session_state["dashboard_view"] = "none"
+
 # -------------- DASHBOARD -------------- #
 if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
 
+    card_clicked = None
+
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Total Assets", f"{stats['total_assets']:,}")
-        btn_alloc_table = st.button("🔍 View Allocated Laptops")
+        # Total Assets → all assets
+        label = (
+            f"<span class='rtc-stat-title'>Total Assets</span>"
+            f"<span class='rtc-stat-value'>{stats['total_assets']:,}</span>"
+        )
+        if st.button(
+            label,
+            key="card_total_assets",
+            help="Show list of all assets",
+            type="secondary",
+        ):
+            card_clicked = "all"
+        st.markdown(
+            "<style>div[data-testid='stButton'][key='card_total_assets'] {margin-bottom:0}</style>",
+            unsafe_allow_html=True,
+        )
     with c2:
-        st.metric("Total Assets Amount", f"{stats['total_amount']:,.0f}")
-        btn_lap_table = st.button("💻 View Laptops")
+        label = (
+            f"<span class='rtc-stat-title'>Total Assets Amount</span>"
+            f"<span class='rtc-stat-value'>{stats['total_amount']:,.0f}</span>"
+        )
+        if st.button(
+            label,
+            key="card_total_amount",
+            help="Show list of all assets",
+            type="secondary",
+        ):
+            card_clicked = "all"
+        st.markdown(
+            "<style>div[data-testid='stButton'][key='card_total_amount'] {margin-bottom:0}</style>",
+            unsafe_allow_html=True,
+        )
     with c3:
-        st.metric("Total Allocated Laptops", f"{stats['total_allocated_laptops']:,}")
-        btn_office_table = st.button("📦 View Office Equipment")
+        label = (
+            f"<span class='rtc-stat-title'>Total Allocated Laptops</span>"
+            f"<span class='rtc-stat-value'>{stats['total_allocated_laptops']:,}</span>"
+        )
+        if st.button(
+            label,
+            key="card_allocated",
+            help="Show laptops currently allocated to employees",
+            type="secondary",
+        ):
+            card_clicked = "allocated"
+        st.markdown(
+            "<style>div[data-testid='stButton'][key='card_allocated'] {margin-bottom:0}</style>",
+            unsafe_allow_html=True,
+        )
     with c4:
-        st.metric("Laptops in Stock", f"{stats['laptops_in_stock']:,}")
+        label = (
+            f"<span class='rtc-stat-title'>Laptops in Stock</span>"
+            f"<span class='rtc-stat-value'>{stats['laptops_in_stock']:,}</span>"
+        )
+        if st.button(
+            label,
+            key="card_stock",
+            help="Show laptops currently in stock",
+            type="secondary",
+        ):
+            card_clicked = "stock"
+        st.markdown(
+            "<style>div[data-testid='stButton'][key='card_stock'] {margin-bottom:0}</style>",
+            unsafe_allow_html=True,
+        )
+
+    # apply stat-card styling (wrapper divs)
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stButton"][key="card_total_assets"],
+        div[data-testid="stButton"][key="card_total_amount"],
+        div[data-testid="stButton"][key="card_allocated"],
+        div[data-testid="stButton"][key="card_stock"] {
+            width: 100%;
+        }
+        div[data-testid="stButton"][key="card_total_assets"] > button,
+        div[data-testid="stButton"][key="card_total_amount"] > button,
+        div[data-testid="stButton"][key="card_allocated"] > button,
+        div[data-testid="stButton"][key="card_stock"] > button {
+            width: 100%;
+            text-align:left;
+        }
+        div[data-testid="stButton"][key="card_total_assets"] > button > div,
+        div[data-testid="stButton"][key="card_total_amount"] > button > div,
+        div[data-testid="stButton"][key="card_allocated"] > button > div,
+        div[data-testid="stButton"][key="card_stock"] > button > div {
+            width:100%;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # track which detail view user wants
+    if card_clicked:
+        st.session_state["dashboard_view"] = card_clicked
 
     st.markdown("---")
 
-    if btn_alloc_table:
-        st.subheader("Allocated Laptops")
-        df = get_allocated_laptops(snapshot_df)
-        if df.empty:
-            st.info("No allocated laptops found yet. Once you allocate from the **Allocate** tab, they will appear here.")
-        else:
-            view = df[
-                [
-                    "current_holder_name",
-                    "asset_name",
-                    "laptop_description",
-                    "in_usage_from",
-                    "laptop_category",
-                    "purchase_amount",
-                ]
-            ].rename(
-                columns={
-                    "current_holder_name": "Employee Name",
-                    "asset_name": "Laptop (Name)",
-                    "laptop_description": "Laptop Description",
-                    "in_usage_from": "In Usage From",
-                    "laptop_category": "Laptop Category",
-                    "purchase_amount": "Laptop Purchase Amount",
-                }
-            )
-            st.dataframe(view, use_container_width=True)
+    view = st.session_state["dashboard_view"]
 
-    elif btn_lap_table:
-        st.subheader("Laptops — Complete Inventory")
-        df = get_assets_by_type(snapshot_df, "Laptop")
-        if df.empty:
-            st.info("No laptop assets found. Add laptops from the **Add Asset** tab.")
+    if view == "all":
+        st.subheader("All Assets")
+        if snapshot_df.empty:
+            st.info("No assets recorded yet.")
         else:
-            view = df[
+            view_df = snapshot_df[
                 [
-                    "current_holder_name",
+                    "asset_id",
+                    "asset_type",
                     "asset_name",
-                    "laptop_description",
-                    "in_usage_from",
                     "laptop_category",
+                    "current_holder_name",
+                    "status",
+                    "purchase_date",
                     "purchase_amount",
                 ]
             ].rename(
                 columns={
-                    "current_holder_name": "Employee Name",
-                    "asset_name": "Laptop (Name)",
-                    "laptop_description": "Laptop Description",
-                    "in_usage_from": "In Usage From",
-                    "laptop_category": "Laptop Category",
-                    "purchase_amount": "Laptop Purchase Amount",
-                }
-            )
-            st.dataframe(view, use_container_width=True)
-
-    elif btn_office_table:
-        st.subheader("Office Equipment — Complete Inventory")
-        df = get_assets_by_type(snapshot_df, "Office Equipment")
-        if df.empty:
-            st.info("No office equipment recorded yet. Add items from the **Add Asset** tab.")
-        else:
-            view = df[
-                [
-                    "current_holder_name",
-                    "asset_name",
-                    "laptop_description",
-                    "in_usage_from",
-                    "laptop_category",
-                    "purchase_amount",
-                ]
-            ].rename(
-                columns={
-                    "current_holder_name": "Current Holder",
+                    "asset_id": "Asset ID",
+                    "asset_type": "Type",
                     "asset_name": "Asset Name",
-                    "laptop_description": "Description",
-                    "in_usage_from": "In Usage From",
                     "laptop_category": "Category",
+                    "current_holder_name": "Current Holder",
+                    "status": "Status",
+                    "purchase_date": "Purchase Date",
                     "purchase_amount": "Purchase Amount",
                 }
             )
-            st.dataframe(view, use_container_width=True)
+            st.dataframe(view_df, use_container_width=True)
+
+    elif view == "allocated":
+        st.subheader("Allocated Laptops")
+        df = get_allocated_laptops(snapshot_df)
+        if df.empty:
+            st.info("No laptops are currently allocated to employees.")
+        else:
+            view_df = df[
+                [
+                    "current_holder_name",
+                    "asset_name",
+                    "laptop_description",
+                    "in_usage_from",
+                    "laptop_category",
+                    "purchase_amount",
+                ]
+            ].rename(
+                columns={
+                    "current_holder_name": "Employee Name",
+                    "asset_name": "Laptop (Name)",
+                    "laptop_description": "Laptop Description",
+                    "in_usage_from": "In Usage From",
+                    "laptop_category": "Laptop Category",
+                    "purchase_amount": "Laptop Purchase Amount",
+                }
+            )
+            st.dataframe(view_df, use_container_width=True)
+
+    elif view == "stock":
+        st.subheader("Laptops in Stock")
+        df = get_laptops_in_stock(snapshot_df)
+        if df.empty:
+            st.info("No laptops currently in stock.")
+        else:
+            view_df = df[
+                [
+                    "asset_id",
+                    "asset_name",
+                    "laptop_description",
+                    "laptop_category",
+                    "purchase_date",
+                    "purchase_amount",
+                ]
+            ].rename(
+                columns={
+                    "asset_id": "Asset ID",
+                    "asset_name": "Laptop (Name)",
+                    "laptop_description": "Laptop Description",
+                    "laptop_category": "Laptop Category",
+                    "purchase_date": "Purchase Date",
+                    "purchase_amount": "Laptop Purchase Amount",
+                }
+            )
+            st.dataframe(view_df, use_container_width=True)
     else:
-        st.info("Tip: Start by adding your laptops and office equipment from the **Add Asset** tab, then allocate them to employees from the **Allocate** tab.")
+        st.info(
+            "Click any dashboard card above to drill down — "
+            "Total Assets, Allocated Laptops, or Laptops in Stock."
+        )
 
 # -------------- ASSETS -------------- #
 elif menu == "Assets":
@@ -800,7 +947,6 @@ elif menu == "Add Asset":
 elif menu == "Allocate":
     st.subheader("Allocate Asset to Employee")
 
-    # In-stock assets (from snapshot)
     if snapshot_df.empty:
         st.info("No assets available. Add assets first from the **Add Asset** tab.")
     else:
