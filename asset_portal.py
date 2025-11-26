@@ -3,25 +3,16 @@
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
 
-Features:
-- Dashboard:
-    - Total Assets (clickable → list of all assets)
-    - Total Assets Amount
-    - Total Allocated Laptops (clickable → list of allocated laptops)
-    - Laptops in Stock (clickable → list of laptops in stock)
-- Assets:
-    - View Laptops / Office Equipment with current holder & status
-    - View Movement History per Asset
-- Add Asset:
-    - Creates asset + initial Purchase movement (Vendor -> Store)
-- Allocate:
-    - Allocate in-stock asset to employee (Stock -> Employee)
-- Return / Transfer / Scrap:
-    - Record movement and update snapshot
-- Employees:
-    - Simple list of employees to use in dropdowns
+Layout:
+- Top bar (logo, search, quick actions)
+- Left navigation sidebar (Dashboard, Assets, Add Asset, Allocate, etc.)
+- Dashboard with clickable stat cards:
+    * Total Assets  → list of all assets
+    * Total Assets Amount → list of all assets
+    * Total Allocated Laptops → allocated laptops
+    * Laptops in Stock → laptops in stock
 
-DB file: assets.db in the same folder.
+Business behaviour same as previous version.
 """
 
 import os
@@ -487,25 +478,39 @@ st.set_page_config(
     layout="wide",
 )
 
+# Global style – light, soft cards similar to reference UI
 st.markdown(
     """
     <style>
     .stApp {
-        background: radial-gradient(circle at top left, #111827 0, #020617 40%, #020617 100%);
-        color: #e5e7eb;
+        background: radial-gradient(circle at top left, #f7fbff 0, #edf3ff 35%, #e7edf8 100%);
+        color: #0f172a;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+
+    /* remove default padding at top */
+    .main .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 1.5rem;
+        max-width: 1200px;
     }
 
     /* Sidebar */
     section[data-testid="stSidebar"] {
-        background: #020617;
-        border-right: 1px solid rgba(148,163,184,0.35);
+        background: rgba(255,255,255,0.96);
+        border-right: 1px solid rgba(203,213,225,0.9);
     }
     section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
-        padding-top: 1rem;
+        padding-top: 1.0rem;
+    }
+    section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h1 {
+        font-size: 0.85rem !important;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #94a3b8;
     }
 
-    /* Radio → card-style nav */
+    /* Radio -> pill navigation */
     section[data-testid="stSidebar"] input[type="radio"] {
         visibility: hidden;
         width: 0;
@@ -514,79 +519,164 @@ st.markdown(
         padding: 0;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label {
-        display: block;
-        padding: 0.55rem 0.85rem;
-        margin-bottom: 0.25rem;
-        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.8rem;
+        margin-bottom: 0.3rem;
+        border-radius: 0.7rem;
         cursor: pointer;
         border: 1px solid transparent;
-        transition: all 0.18s ease-out;
+        transition: all 0.16s ease-out;
         font-size: 0.9rem;
+        color: #0f172a;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
-        background: rgba(15,23,42,0.95);
-        border-color: rgba(59,130,246,0.7);
+        background: #e5edff;
+        border-color: #c4d3ff;
     }
 
-    /* Header */
-    .rtc-header {
-        padding: 1.4rem 0 1.1rem 0;
+    /* generic button style (top bar small buttons) */
+    .rtc-top-btn {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        padding:0.4rem 0.9rem;
+        border-radius:999px;
+        border:1px solid #d0ddff;
+        background:#f6f8ff;
+        color:#1d4ed8;
+        font-size:0.8rem;
+        font-weight:500;
+        cursor:pointer;
     }
-    .rtc-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.2rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-        background: rgba(15,118,255,0.18);
-        border: 1px solid rgba(56,189,248,0.35);
-        color: #e0f2fe;
-    }
-    .rtc-header h1 {
-        margin: 0.4rem 0 0.2rem 0;
-        font-size: 2.1rem;
-        font-weight: 700;
-        letter-spacing: .02em;
-        color: #f9fafb;
-    }
-    .rtc-subtitle {
-        margin: 0;
-        font-size: 0.95rem;
-        color: #9ca3af;
+    .rtc-top-btn-primary {
+        background:#2563eb;
+        border-color:#1d4ed8;
+        color:#f9fafb;
     }
 
-    /* Generic buttons */
-    div.stButton > button {
-        border-radius: 1.1rem;
-        padding: 0.8rem 1.1rem;
-        border: 1px solid rgba(148,163,184,0.4);
-        background: radial-gradient(circle at top left, #1f2937 0, #020617 65%);
-        color: #e5e7eb;
-        font-weight: 500;
-        font-size: 0.98rem;
-        box-shadow: 0 18px 40px rgba(15,23,42,0.8);
-        cursor: pointer;
-        text-align: left;
-    }
-    div.stButton > button:hover {
-        border-color: rgba(56,189,248,0.9);
-        box-shadow: 0 22px 50px rgba(56,189,248,0.35);
-        transform: translateY(-1px);
+    .rtc-top-btn:hover {
+        box-shadow:0 8px 18px rgba(37,99,235,0.18);
+        transform:translateY(-0.5px);
     }
 
-    /* Dataframes */
+    /* Top navigation bar */
+    .rtc-topbar {
+        background: rgba(255,255,255,0.96);
+        border-radius: 1rem;
+        padding: 0.6rem 1.0rem;
+        margin-bottom: 1.0rem;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        box-shadow:0 18px 45px rgba(148,163,184,0.3);
+        border:1px solid rgba(226,232,240,0.9);
+    }
+    .rtc-brand {
+        display:flex;
+        align-items:center;
+        gap:0.6rem;
+        font-weight:600;
+        color:#1d4ed8;
+        font-size:1rem;
+    }
+    .rtc-logo {
+        width:24px;
+        height:24px;
+        border-radius:8px;
+        background:linear-gradient(135deg,#2563eb,#4f46e5);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:white;
+        font-size:0.75rem;
+    }
+    .rtc-top-actions {
+        display:flex;
+        align-items:center;
+        gap:0.6rem;
+    }
+    .rtc-search {
+        position:relative;
+    }
+    .rtc-search input {
+        padding:0.35rem 0.9rem 0.35rem 2.1rem;
+        border-radius:999px;
+        border:1px solid #d0ddff;
+        background:#f8fbff;
+        font-size:0.8rem;
+        min-width:210px;
+        outline:none;
+    }
+    .rtc-search input::placeholder {
+        color:#9ca3af;
+    }
+    .rtc-search-icon {
+        position:absolute;
+        left:0.65rem;
+        top:50%;
+        transform:translateY(-50%);
+        font-size:0.8rem;
+        color:#9ca3af;
+    }
+    .rtc-avatar {
+        width:28px;
+        height:28px;
+        border-radius:999px;
+        background:#f97316;
+        color:white;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:0.78rem;
+        font-weight:600;
+    }
+
+    /* Page header below topbar */
+    .rtc-page-header {
+        margin-bottom:0.8rem;
+    }
+    .rtc-page-title {
+        font-size:1.3rem;
+        font-weight:600;
+        margin-bottom:0.05rem;
+        color:#0f172a;
+    }
+    .rtc-page-subtitle {
+        font-size:0.85rem;
+        color:#6b7280;
+    }
+
+    /* Dashboard stat buttons */
+    div[data-testid="stButton"][id^="stat-card-"] > button {
+        width:100%;
+        text-align:left;
+        white-space:pre-line;
+        padding:0.9rem 1.0rem;
+        border-radius:0.9rem;
+        border:1px solid rgba(226,232,240,0.95);
+        background:#ffffff;
+        color:#111827;
+        font-size:0.9rem;
+        font-weight:500;
+        box-shadow:0 18px 45px rgba(148,163,184,0.35);
+    }
+    div[data-testid="stButton"][id^="stat-card-"] > button:hover {
+        border-color:#c4d3ff;
+        box-shadow:0 22px 55px rgba(129,140,248,0.35);
+        transform:translateY(-1px);
+    }
+
+    /* make dataframes look like cards */
     .stDataFrame, .stTable {
-        border-radius: 0.9rem;
-        overflow: hidden;
-        border: 1px solid rgba(55,65,81,0.75);
-        box-shadow: 0 18px 40px rgba(15,23,42,0.85);
+        border-radius:1rem;
+        border:1px solid rgba(226,232,240,0.9);
+        box-shadow:0 22px 55px rgba(148,163,184,0.35);
+        background:#ffffff;
     }
 
-    hr { border-color: rgba(55,65,81,0.7); }
-
+    hr { border-color: rgba(203,213,225,0.9); }
     </style>
     """,
     unsafe_allow_html=True,
@@ -595,15 +685,34 @@ st.markdown(
 conn = get_connection()
 init_db(conn)
 
-# Header
+# ---------- TOP BAR (logo, search, quick actions) ---------- #
 st.markdown(
     """
-    <div class="rtc-header">
-        <div class="rtc-pill">RTC League • Internal Portal</div>
-        <h1>Asset Management Portal</h1>
-        <p class="rtc-subtitle">
-            Track laptops and office equipment across teams — allocations, returns and movement history in one place.
-        </p>
+    <div class="rtc-topbar">
+        <div class="rtc-brand">
+            <div class="rtc-logo">R</div>
+            <div>RTC League Assets</div>
+        </div>
+        <div class="rtc-top-actions">
+            <div class="rtc-search">
+                <span class="rtc-search-icon">🔍</span>
+                <input type="text" placeholder="Search assets (UI only, not functional)" />
+            </div>
+            <button class="rtc-top-btn">List of Assets</button>
+            <button class="rtc-top-btn rtc-top-btn-primary">Add an Asset</button>
+            <div class="rtc-avatar">TZ</div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ---------- PAGE HEADER ---------- #
+st.markdown(
+    """
+    <div class="rtc-page-header">
+        <div class="rtc-page-title">Dashboard</div>
+        <div class="rtc-page-subtitle">Dashboard &amp; statistics for RTC League asset management.</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -621,7 +730,7 @@ snapshot_df = get_snapshot(conn)
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
 
-# -------------- DASHBOARD -------------- #
+# ---------------------- DASHBOARD ---------------------- #
 if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
 
@@ -630,42 +739,20 @@ if menu == "Dashboard":
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         label = f"Total Assets\n{stats['total_assets']:,}"
-        if st.button(label, key="card_total_assets", help="Show list of all assets"):
+        if st.button(label, key="stat-card-total-assets", help="Show list of all assets"):
             card_clicked = "all"
     with c2:
         label = f"Total Assets Amount\n{stats['total_amount']:,.0f}"
-        if st.button(label, key="card_total_amount", help="Show list of all assets"):
+        if st.button(label, key="stat-card-total-amount", help="Show list of all assets"):
             card_clicked = "all"
     with c3:
         label = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
-        if st.button(label, key="card_allocated", help="Show laptops currently allocated"):
+        if st.button(label, key="stat-card-allocated", help="Show laptops currently allocated"):
             card_clicked = "allocated"
     with c4:
         label = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
-        if st.button(label, key="card_stock", help="Show laptops currently in stock"):
+        if st.button(label, key="stat-card-stock", help="Show laptops currently in stock"):
             card_clicked = "stock"
-
-    # Equal width for stat buttons
-    st.markdown(
-        """
-        <style>
-        div[data-testid="stButton"][key="card_total_assets"],
-        div[data-testid="stButton"][key="card_total_amount"],
-        div[data-testid="stButton"][key="card_allocated"],
-        div[data-testid="stButton"][key="card_stock"] {
-            width: 100%;
-        }
-        div[data-testid="stButton"][key="card_total_assets"] > button,
-        div[data-testid="stButton"][key="card_total_amount"] > button,
-        div[data-testid="stButton"][key="card_allocated"] > button,
-        div[data-testid="stButton"][key="card_stock"] > button {
-            width: 100%;
-            white-space: pre-line; /* respect \n in labels */
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
 
     if card_clicked:
         st.session_state["dashboard_view"] = card_clicked
@@ -763,7 +850,7 @@ if menu == "Dashboard":
             "Total Assets, Allocated Laptops, or Laptops in Stock."
         )
 
-# -------------- ASSETS -------------- #
+# ---------------------- ASSETS ---------------------- #
 elif menu == "Assets":
     st.subheader("Assets Overview")
 
@@ -816,7 +903,7 @@ elif menu == "Assets":
             else:
                 st.dataframe(hist, use_container_width=True)
 
-# -------------- ADD ASSET -------------- #
+# ---------------------- ADD ASSET ---------------------- #
 elif menu == "Add Asset":
     st.subheader("Add New Asset")
 
@@ -851,7 +938,7 @@ elif menu == "Add Asset":
                 )
                 st.success(f"Asset added with ID **{asset_id}**")
 
-# -------------- ALLOCATE -------------- #
+# ---------------------- ALLOCATE ---------------------- #
 elif menu == "Allocate":
     st.subheader("Allocate Asset to Employee")
 
@@ -897,7 +984,7 @@ elif menu == "Allocate":
                         except Exception as e:
                             st.error(str(e))
 
-# -------------- RETURN / TRANSFER / SCRAP -------------- #
+# ---------------------- RETURN / TRANSFER / SCRAP ---------------------- #
 elif menu == "Return / Transfer / Scrap":
     st.subheader("Return / Transfer / Scrap Asset")
 
@@ -932,7 +1019,7 @@ elif menu == "Return / Transfer / Scrap":
             except Exception as e:
                 st.error(str(e))
 
-# -------------- EMPLOYEES -------------- #
+# ---------------------- EMPLOYEES ---------------------- #
 elif menu == "Employees":
     st.subheader("Employees")
 
