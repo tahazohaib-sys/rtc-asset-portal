@@ -3,15 +3,12 @@
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
 
-Layout:
-- Glassmorphism theme
-- Top bar (logo, search, quick actions)
-- Left navigation sidebar (Dashboard, Assets, Add Asset, Allocate, etc.)
-- Dashboard with clickable stat cards:
-    * Total Assets  → list of all assets
-    * Total Assets Amount → list of all assets
-    * Total Allocated Laptops → allocated laptops
-    * Laptops in Stock → laptops in stock
+Glassmorphism UI + functional top bar:
+- Top bar buttons:
+    * List of Assets  → navigates to Assets tab
+    * Add an Asset    → navigates to Add Asset tab
+    * Search box      → filters asset lists by asset name / ID
+- Dashboard stat cards are clickable (same as before)
 """
 
 import os
@@ -152,8 +149,7 @@ def get_snapshot(conn: sqlite3.Connection) -> pd.DataFrame:
         conn,
     )
 
-    # Prepare movement groups by asset
-    by_asset = {}
+    by_asset: dict[str, list] = {}
     for _, row in moves.iterrows():
         aid = row["asset_id"]
         by_asset.setdefault(aid, []).append(row)
@@ -245,25 +241,34 @@ def get_allocated_laptops(snapshot: pd.DataFrame) -> pd.DataFrame:
         return snapshot
     is_laptop = snapshot["asset_type"].str.lower().eq("laptop")
     is_emp = snapshot["current_holder_type"].str.lower().eq("employee")
-    df = snapshot[is_laptop & is_emp].copy()
-    return df
+    return snapshot[is_laptop & is_emp].copy()
 
 
 def get_assets_by_type(snapshot: pd.DataFrame, asset_type: str) -> pd.DataFrame:
     if snapshot.empty:
         return snapshot
-    df = snapshot[snapshot["asset_type"].str.lower() == asset_type.lower()].copy()
-    return df
+    return snapshot[snapshot["asset_type"].str.lower() == asset_type.lower()].copy()
 
 
 def get_laptops_in_stock(snapshot: pd.DataFrame) -> pd.DataFrame:
-    """Laptops where holder is stock or status is 'In Stock'."""
     if snapshot.empty:
         return snapshot
     is_laptop = snapshot["asset_type"].str.lower().eq("laptop")
     is_stock = snapshot["current_holder_type"].str.lower().eq("stock")
     is_in_stock = snapshot["status"].str.lower().eq("in stock")
     return snapshot[is_laptop & (is_stock | is_in_stock)].copy()
+
+
+def apply_search_filter(df: pd.DataFrame, query: str) -> pd.DataFrame:
+    """Filter by asset_id or asset_name containing query (case-insensitive)."""
+    q = (query or "").strip().lower()
+    if not q or df.empty:
+        return df
+    mask = (
+        df["asset_id"].astype(str).str.lower().str.contains(q)
+        | df["asset_name"].astype(str).str.lower().str.contains(q)
+    )
+    return df[mask].copy()
 
 
 # ---------------------- BUSINESS ACTIONS ---------------------- #
@@ -308,7 +313,6 @@ def add_asset(
         ),
     )
 
-    # Initial movement: Vendor -> Store (Stock)
     cur.execute(
         """
         INSERT INTO asset_movements (
@@ -431,7 +435,7 @@ def process_movement(
 
 
 def get_movement_history(conn: sqlite3.Connection, asset_id: str) -> pd.DataFrame:
-    df = pd.read_sql_query(
+    return pd.read_sql_query(
         """
         SELECT
             movement_date,
@@ -447,7 +451,6 @@ def get_movement_history(conn: sqlite3.Connection, asset_id: str) -> pd.DataFram
         conn,
         params=(asset_id,),
     )
-    return df
 
 
 def get_employees(conn: sqlite3.Connection) -> list[tuple[int, str]]:
@@ -477,7 +480,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Glassmorphism theme
+# Glassmorphism theme + component styling
 st.markdown(
     """
     <style>
@@ -505,7 +508,6 @@ st.markdown(
         letter-spacing: .08em;
         color: #9ca3af !important;
     }
-
     section[data-testid="stSidebar"] input[type="radio"] {
         visibility: hidden;
         width: 0;
@@ -537,15 +539,12 @@ st.markdown(
         box-shadow: 0 12px 30px rgba(37,99,235,0.55);
     }
 
-    /* Top bar glass */
-    .rtc-topbar {
+    /* Top bar wrapper */
+    .rtc-topbar-glass {
         background: linear-gradient(135deg, rgba(15,23,42,0.78), rgba(37,99,235,0.16));
         border-radius: 1rem;
         padding: 0.7rem 1.1rem;
         margin-bottom: 1.0rem;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
         box-shadow:0 22px 55px rgba(15,23,42,0.95);
         border:1px solid rgba(148,163,184,0.6);
         backdrop-filter: blur(18px);
@@ -570,59 +569,6 @@ st.markdown(
         color:white;
         font-size:0.8rem;
     }
-    .rtc-top-actions {
-        display:flex;
-        align-items:center;
-        gap:0.6rem;
-    }
-    .rtc-search {
-        position:relative;
-    }
-    .rtc-search input {
-        padding:0.35rem 0.9rem 0.35rem 2.1rem;
-        border-radius:999px;
-        border:1px solid rgba(148,163,184,0.7);
-        background:rgba(15,23,42,0.85);
-        color:#e5e7eb;
-        font-size:0.8rem;
-        min-width:210px;
-        outline:none;
-    }
-    .rtc-search input::placeholder {
-        color:#9ca3af;
-    }
-    .rtc-search-icon {
-        position:absolute;
-        left:0.65rem;
-        top:50%;
-        transform:translateY(-50%);
-        font-size:0.8rem;
-        color:#9ca3af;
-    }
-    .rtc-top-btn {
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        padding:0.4rem 0.9rem;
-        border-radius:999px;
-        border:1px solid rgba(129,140,248,0.85);
-        background:rgba(30,64,175,0.85);
-        color:#e5edff;
-        font-size:0.8rem;
-        font-weight:500;
-        cursor:pointer;
-        box-shadow:0 10px 30px rgba(30,64,175,0.7);
-    }
-    .rtc-top-btn-secondary {
-        background:rgba(15,23,42,0.85);
-        border-color:rgba(148,163,184,0.75);
-        box-shadow:0 10px 25px rgba(15,23,42,0.8);
-        color:#cbd5f5;
-    }
-    .rtc-top-btn:hover {
-        box-shadow:0 14px 35px rgba(59,130,246,0.8);
-        transform:translateY(-1px);
-    }
     .rtc-avatar {
         width:28px;
         height:28px;
@@ -635,6 +581,52 @@ st.markdown(
         font-size:0.78rem;
         font-weight:600;
         box-shadow:0 10px 30px rgba(248,113,113,0.65);
+    }
+
+    /* Search in top bar */
+    .rtc-topbar-glass input[type="text"] {
+        padding:0.35rem 0.9rem 0.35rem 2.1rem;
+        border-radius:999px;
+        border:1px solid rgba(148,163,184,0.7);
+        background:rgba(15,23,42,0.85);
+        color:#e5e7eb;
+        font-size:0.8rem;
+        outline:none;
+    }
+    .rtc-topbar-glass input[type="text"]::placeholder {
+        color:#9ca3af;
+    }
+    .rtc-search-icon {
+        position:absolute;
+        left:0.65rem;
+        top:50%;
+        transform:translateY(-50%);
+        font-size:0.8rem;
+        color:#9ca3af;
+    }
+
+    /* Top bar buttons */
+    div[data-testid="stButton"][id^="top-btn-"] > button {
+        width:100%;
+        padding:0.4rem 0.7rem;
+        border-radius:999px;
+        border:1px solid rgba(129,140,248,0.85);
+        background:rgba(30,64,175,0.85);
+        color:#e5edff;
+        font-size:0.8rem;
+        font-weight:500;
+        cursor:pointer;
+        box-shadow:0 10px 30px rgba(30,64,175,0.7);
+    }
+    div[data-testid="stButton"][id^="top-btn-"] > button:hover {
+        box-shadow:0 14px 35px rgba(59,130,246,0.8);
+        transform:translateY(-1px);
+    }
+    div[data-testid="stButton"][id="top-btn-assets"] > button {
+        background:rgba(15,23,42,0.85);
+        border-color:rgba(148,163,184,0.75);
+        box-shadow:0 10px 25px rgba(15,23,42,0.8);
+        color:#cbd5f5;
     }
 
     /* Page header */
@@ -652,7 +644,7 @@ st.markdown(
         color:#9ca3af;
     }
 
-    /* GLASS STAT CARDS */
+    /* Glass stat cards */
     div[data-testid="stButton"][id^="stat-card-"] > button {
         width:100%;
         text-align:left;
@@ -676,7 +668,6 @@ st.markdown(
         transform:translateY(-2px);
     }
 
-    /* Card-like tables */
     .stDataFrame, .stTable {
         border-radius:1rem;
         border:1px solid rgba(148,163,184,0.6);
@@ -695,27 +686,57 @@ st.markdown(
 conn = get_connection()
 init_db(conn)
 
-# ---------- TOP BAR ---------- #
-st.markdown(
-    """
-    <div class="rtc-topbar">
+# ---------- SESSION STATE ---------- #
+if "nav_menu" not in st.session_state:
+    st.session_state["nav_menu"] = "Dashboard"
+if "search_query" not in st.session_state:
+    st.session_state["search_query"] = ""
+
+# ---------- TOP BAR (functional) ---------- #
+st.markdown('<div class="rtc-topbar-glass">', unsafe_allow_html=True)
+left_col, spacer_col, search_col, list_col, add_col, avatar_col = st.columns(
+    [3, 0.2, 3, 1.2, 1.4, 0.7]
+)
+
+with left_col:
+    st.markdown(
+        """
         <div class="rtc-brand">
             <div class="rtc-logo">R</div>
             <div>RTC League Assets</div>
         </div>
-        <div class="rtc-top-actions">
-            <div class="rtc-search">
-                <span class="rtc-search-icon">🔍</span>
-                <input type="text" placeholder="Search assets (UI only, not functional)" />
-            </div>
-            <button class="rtc-top-btn rtc-top-btn-secondary">List of Assets</button>
-            <button class="rtc-top-btn">Add an Asset</button>
-            <div class="rtc-avatar">TZ</div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        """,
+        unsafe_allow_html=True,
+    )
+
+with search_col:
+    # wrapper for search icon
+    st.markdown('<div style="position:relative;">', unsafe_allow_html=True)
+    st.markdown('<span class="rtc-search-icon">🔍</span>', unsafe_allow_html=True)
+    q = st.text_input(
+        "Search assets",
+        value=st.session_state["search_query"],
+        label_visibility="collapsed",
+        key="top-search",
+        placeholder="Search assets by ID or name",
+    )
+    st.session_state["search_query"] = q
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with list_col:
+    if st.button("List of Assets", key="top-btn-assets"):
+        st.session_state["nav_menu"] = "Assets"
+        st.experimental_rerun()
+
+with add_col:
+    if st.button("Add an Asset", key="top-btn-add"):
+        st.session_state["nav_menu"] = "Add Asset"
+        st.experimental_rerun()
+
+with avatar_col:
+    st.markdown('<div class="rtc-avatar">TZ</div>', unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------- PAGE HEADER ---------- #
 st.markdown(
@@ -730,21 +751,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Navigation
+# ---------- SIDEBAR NAV (linked with top bar) ---------- #
 menu = st.sidebar.radio(
     "Navigation",
     ["Dashboard", "Assets", "Add Asset", "Allocate", "Return / Transfer / Scrap", "Employees"],
+    key="nav_menu",
 )
-
 snapshot_df = get_snapshot(conn)
 
+# Dashboard drill-down state
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
+
+search_query = st.session_state["search_query"]
 
 # ---------------------- DASHBOARD ---------------------- #
 if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
-
     card_clicked = None
 
     c1, c2, c3, c4 = st.columns(4)
@@ -774,10 +797,11 @@ if menu == "Dashboard":
 
     if view == "all":
         st.subheader("All Assets")
-        if snapshot_df.empty:
-            st.info("No assets recorded yet.")
+        df = apply_search_filter(snapshot_df, search_query)
+        if df.empty:
+            st.info("No assets recorded yet (or no match for current search).")
         else:
-            view_df = snapshot_df[
+            view_df = df[
                 [
                     "asset_id",
                     "asset_type",
@@ -805,8 +829,9 @@ if menu == "Dashboard":
     elif view == "allocated":
         st.subheader("Allocated Laptops")
         df = get_allocated_laptops(snapshot_df)
+        df = apply_search_filter(df, search_query)
         if df.empty:
-            st.info("No laptops are currently allocated to employees.")
+            st.info("No laptops are currently allocated (or no match for current search).")
         else:
             view_df = df[
                 [
@@ -832,8 +857,9 @@ if menu == "Dashboard":
     elif view == "stock":
         st.subheader("Laptops in Stock")
         df = get_laptops_in_stock(snapshot_df)
+        df = apply_search_filter(df, search_query)
         if df.empty:
-            st.info("No laptops currently in stock.")
+            st.info("No laptops currently in stock (or no match for current search).")
         else:
             view_df = df[
                 [
@@ -876,8 +902,10 @@ elif menu == "Assets":
     else:
         df = get_assets_by_type(snapshot_df, "Office Equipment")
 
+    df = apply_search_filter(df, search_query)
+
     if df.empty:
-        st.info("No assets found for this type yet.")
+        st.info("No assets found for this type (or no match for current search).")
     else:
         view = df[
             [
