@@ -231,7 +231,9 @@ def get_dashboard_stats(snapshot: pd.DataFrame) -> dict:
         }
 
     total_assets = len(snapshot)
-    total_amount = snapshot.loc[snapshot["status"] != "Scrapped", "purchase_amount"].fillna(0).sum()
+    total_amount = snapshot.loc[
+        snapshot["status"] != "Scrapped", "purchase_amount"
+    ].fillna(0).sum()
 
     is_laptop = snapshot["asset_type"].str.lower().eq("laptop")
     is_emp = snapshot["current_holder_type"].str.lower().eq("employee")
@@ -267,15 +269,17 @@ def get_assets_by_type(snapshot: pd.DataFrame, asset_type: str) -> pd.DataFrame:
 
 # ---------------------- BUSINESS ACTIONS ---------------------- #
 
-def add_asset(conn: sqlite3.Connection,
-              asset_type: str,
-              asset_name: str,
-              laptop_category: str,
-              laptop_description: str,
-              purchase_date: date | None,
-              purchase_amount: float | None,
-              vendor_name: str,
-              invoice_no: str):
+def add_asset(
+    conn: sqlite3.Connection,
+    asset_type: str,
+    asset_name: str,
+    laptop_category: str,
+    laptop_description: str,
+    purchase_date: date | None,
+    purchase_amount: float | None,
+    vendor_name: str,
+    invoice_no: str,
+):
     prefix = "LAP" if asset_type.lower() == "laptop" else "OFF"
     asset_id = next_asset_id(conn, prefix)
 
@@ -331,11 +335,13 @@ def add_asset(conn: sqlite3.Connection,
     return asset_id
 
 
-def allocate_asset(conn: sqlite3.Connection,
-                   snapshot: pd.DataFrame,
-                   asset_id: str,
-                   employee_name: str,
-                   alloc_date: date | None):
+def allocate_asset(
+    conn: sqlite3.Connection,
+    snapshot: pd.DataFrame,
+    asset_id: str,
+    employee_name: str,
+    alloc_date: date | None,
+):
     alloc_date_iso = to_iso(alloc_date) or date.today().isoformat()
 
     row = snapshot.loc[snapshot["asset_id"] == asset_id]
@@ -371,13 +377,15 @@ def allocate_asset(conn: sqlite3.Connection,
     conn.commit()
 
 
-def process_movement(conn: sqlite3.Connection,
-                     snapshot: pd.DataFrame,
-                     asset_id: str,
-                     action: str,
-                     move_date: date | None,
-                     new_employee: str | None,
-                     remarks: str | None):
+def process_movement(
+    conn: sqlite3.Connection,
+    snapshot: pd.DataFrame,
+    asset_id: str,
+    action: str,
+    move_date: date | None,
+    new_employee: str | None,
+    remarks: str | None,
+):
     move_date_iso = to_iso(move_date) or date.today().isoformat()
 
     row = snapshot.loc[snapshot["asset_id"] == asset_id]
@@ -464,22 +472,132 @@ def add_employee(conn: sqlite3.Connection, name: str, email: str | None = None):
 
 # ---------------------- STREAMLIT UI ---------------------- #
 
-st.set_page_config(page_title="Asset Management Portal", layout="wide")
+st.set_page_config(
+    page_title="RTC League | Asset Management Portal",
+    page_icon="💻",
+    layout="wide",
+)
 
-conn = get_connection()
-init_db(conn)
-
+# Global styling
 st.markdown(
     """
     <style>
-    /* simple cosmetic tweaks to look more like a portal */
-    .css-18e3th9, .css-1d391kg {padding-top: 1rem;}
+    /* App background & base typography */
+    .stApp {
+        background: radial-gradient(circle at top left, #111827 0, #020617 40%, #020617 100%);
+        color: #e5e7eb;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #020617 0%, #020617 35%, #020617 100%);
+        border-right: 1px solid rgba(148,163,184,0.35);
+    }
+    section[data-testid="stSidebar"] .css-1d391kg, 
+    section[data-testid="stSidebar"] .css-18e3th9 {
+        padding-top: 1rem;
+    }
+
+    /* Header block */
+    .rtc-header {
+        padding: 1.4rem 0 1.1rem 0;
+    }
+    .rtc-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.2rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        background: rgba(15,118,255,0.18);
+        border: 1px solid rgba(56,189,248,0.35);
+        color: #e0f2fe;
+    }
+    .rtc-header h1 {
+        margin: 0.4rem 0 0.2rem 0;
+        font-size: 2.1rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        color: #f9fafb;
+    }
+    .rtc-subtitle {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #9ca3af;
+    }
+
+    /* Metric cards */
+    div[data-testid="metric-container"] {
+        background: radial-gradient(circle at top left, #1f2937 0, #020617 65%);
+        border-radius: 1.1rem;
+        padding: 1rem 1.2rem;
+        border: 1px solid rgba(148,163,184,0.35);
+        box-shadow: 0 20px 45px rgba(15,23,42,0.75);
+    }
+    div[data-testid="metric-container"] label {
+        color: #9ca3af !important;
+        font-size: 0.85rem;
+    }
+    div[data-testid="metric-container"] .metric-value {
+        font-size: 1.6rem !important;
+        font-weight: 700 !important;
+        color: #e5e7eb !important;
+    }
+
+    /* Buttons */
+    div.stButton > button {
+        border-radius: 999px;
+        padding: 0.45rem 1.1rem;
+        border: 1px solid rgba(59,130,246,0.7);
+        background: radial-gradient(circle at top left, #1d4ed8 0, #1d3a8a 40%, #020617 100%);
+        color: #e5e7eb;
+        font-weight: 500;
+        font-size: 0.9rem;
+        box-shadow: 0 10px 30px rgba(37,99,235,0.55);
+        cursor: pointer;
+    }
+    div.stButton > button:hover {
+        border-color: #38bdf8;
+        box-shadow: 0 16px 40px rgba(56,189,248,0.6);
+        transform: translateY(-1px);
+    }
+
+    /* Tables / dataframes */
+    .stDataFrame, .stTable {
+        border-radius: 0.9rem;
+        overflow: hidden;
+        border: 1px solid rgba(55,65,81,0.75);
+        box-shadow: 0 18px 40px rgba(15,23,42,0.85);
+    }
+
+    /* Horizontal rule */
+    hr {
+        border-color: rgba(55,65,81,0.7);
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-st.title("💻 Asset Management Portal")
+conn = get_connection()
+init_db(conn)
+
+# Header
+st.markdown(
+    """
+    <div class="rtc-header">
+        <div class="rtc-pill">RTC League • Internal Portal</div>
+        <h1>Asset Management Portal</h1>
+        <p class="rtc-subtitle">
+            Track laptops and office equipment across teams — allocations, returns and movement history in one place.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 menu = st.sidebar.radio(
     "Navigation",
@@ -498,29 +616,31 @@ if menu == "Dashboard":
         btn_alloc_table = st.button("🔍 View Allocated Laptops")
     with c2:
         st.metric("Total Assets Amount", f"{stats['total_amount']:,.0f}")
-        btn_lap_table = st.button("🔍 View Laptops")
+        btn_lap_table = st.button("💻 View Laptops")
     with c3:
         st.metric("Total Allocated Laptops", f"{stats['total_allocated_laptops']:,}")
-        btn_office_table = st.button("🔍 View Office Equipment")
+        btn_office_table = st.button("📦 View Office Equipment")
     with c4:
         st.metric("Laptops in Stock", f"{stats['laptops_in_stock']:,}")
 
     st.markdown("---")
 
     if btn_alloc_table:
-        st.subheader("Total Allocated Laptops")
+        st.subheader("Allocated Laptops")
         df = get_allocated_laptops(snapshot_df)
         if df.empty:
-            st.info("No allocated laptops found.")
+            st.info("No allocated laptops found yet. Once you allocate from the **Allocate** tab, they will appear here.")
         else:
-            view = df[[
-                "current_holder_name",
-                "asset_name",
-                "laptop_description",
-                "in_usage_from",
-                "laptop_category",
-                "purchase_amount",
-            ]].rename(
+            view = df[
+                [
+                    "current_holder_name",
+                    "asset_name",
+                    "laptop_description",
+                    "in_usage_from",
+                    "laptop_category",
+                    "purchase_amount",
+                ]
+            ].rename(
                 columns={
                     "current_holder_name": "Employee Name",
                     "asset_name": "Laptop (Name)",
@@ -533,19 +653,21 @@ if menu == "Dashboard":
             st.dataframe(view, use_container_width=True)
 
     elif btn_lap_table:
-        st.subheader("Laptops (All)")
+        st.subheader("Laptops — Complete Inventory")
         df = get_assets_by_type(snapshot_df, "Laptop")
         if df.empty:
-            st.info("No laptop assets found.")
+            st.info("No laptop assets found. Add laptops from the **Add Asset** tab.")
         else:
-            view = df[[
-                "current_holder_name",
-                "asset_name",
-                "laptop_description",
-                "in_usage_from",
-                "laptop_category",
-                "purchase_amount",
-            ]].rename(
+            view = df[
+                [
+                    "current_holder_name",
+                    "asset_name",
+                    "laptop_description",
+                    "in_usage_from",
+                    "laptop_category",
+                    "purchase_amount",
+                ]
+            ].rename(
                 columns={
                     "current_holder_name": "Employee Name",
                     "asset_name": "Laptop (Name)",
@@ -558,35 +680,37 @@ if menu == "Dashboard":
             st.dataframe(view, use_container_width=True)
 
     elif btn_office_table:
-        st.subheader("Office Equipment (All)")
+        st.subheader("Office Equipment — Complete Inventory")
         df = get_assets_by_type(snapshot_df, "Office Equipment")
         if df.empty:
-            st.info("No office equipment assets found.")
+            st.info("No office equipment recorded yet. Add items from the **Add Asset** tab.")
         else:
-            view = df[[
-                "current_holder_name",
-                "asset_name",
-                "laptop_description",
-                "in_usage_from",
-                "laptop_category",
-                "purchase_amount",
-            ]].rename(
+            view = df[
+                [
+                    "current_holder_name",
+                    "asset_name",
+                    "laptop_description",
+                    "in_usage_from",
+                    "laptop_category",
+                    "purchase_amount",
+                ]
+            ].rename(
                 columns={
-                    "current_holder_name": "Employee Name",
-                    "asset_name": "Laptop (Name)",
-                    "laptop_description": "Laptop Description",
+                    "current_holder_name": "Current Holder",
+                    "asset_name": "Asset Name",
+                    "laptop_description": "Description",
                     "in_usage_from": "In Usage From",
-                    "laptop_category": "Laptop Category",
-                    "purchase_amount": "Laptop Purchase Amount",
+                    "laptop_category": "Category",
+                    "purchase_amount": "Purchase Amount",
                 }
             )
             st.dataframe(view, use_container_width=True)
     else:
-        st.info("Click any ‘View…’ button under the cards to see details.")
+        st.info("Tip: Start by adding your laptops and office equipment from the **Add Asset** tab, then allocate them to employees from the **Allocate** tab.")
 
 # -------------- ASSETS -------------- #
 elif menu == "Assets":
-    st.subheader("Assets")
+    st.subheader("Assets Overview")
 
     asset_filter = st.radio(
         "Asset Type",
@@ -600,26 +724,28 @@ elif menu == "Assets":
         df = get_assets_by_type(snapshot_df, "Office Equipment")
 
     if df.empty:
-        st.info("No assets found for this type.")
+        st.info("No assets found for this type yet.")
     else:
-        view = df[[
-            "asset_id",
-            "current_holder_name",
-            "asset_name",
-            "laptop_description",
-            "in_usage_from",
-            "laptop_category",
-            "purchase_amount",
-            "status",
-        ]].rename(
+        view = df[
+            [
+                "asset_id",
+                "current_holder_name",
+                "asset_name",
+                "laptop_description",
+                "in_usage_from",
+                "laptop_category",
+                "purchase_amount",
+                "status",
+            ]
+        ].rename(
             columns={
                 "asset_id": "Asset ID",
-                "current_holder_name": "Employee Name",
-                "asset_name": "Laptop (Name)",
-                "laptop_description": "Laptop Description",
+                "current_holder_name": "Current Holder",
+                "asset_name": "Asset Name",
+                "laptop_description": "Description",
                 "in_usage_from": "In Usage From",
-                "laptop_category": "Laptop Category",
-                "purchase_amount": "Laptop Purchase Amount",
+                "laptop_category": "Category",
+                "purchase_amount": "Purchase Amount",
                 "status": "Status",
             }
         )
@@ -644,13 +770,13 @@ elif menu == "Add Asset":
         with c1:
             asset_type = st.selectbox("Asset Type", ["Laptop", "Office Equipment"])
             asset_name = st.text_input("Asset Name")
-            laptop_category = st.text_input("Laptop Category (e.g., Dev, Admin)")
+            laptop_category = st.text_input("Category (e.g., Dev, Admin, Office)")
             purchase_date = st.date_input("Purchase Date", value=date.today())
         with c2:
             purchase_amount = st.number_input("Purchase Amount", min_value=0.0, step=1000.0)
             vendor_name = st.text_input("Vendor Name")
             invoice_no = st.text_input("Invoice No")
-        laptop_description = st.text_area("Laptop Description")
+        laptop_description = st.text_area("Description / Specs")
 
         submitted = st.form_submit_button("Save Asset")
         if submitted:
@@ -668,7 +794,7 @@ elif menu == "Add Asset":
                     vendor_name,
                     invoice_no,
                 )
-                st.success(f"Asset added with ID {asset_id}")
+                st.success(f"Asset added with ID **{asset_id}**")
 
 # -------------- ALLOCATE -------------- #
 elif menu == "Allocate":
@@ -676,7 +802,7 @@ elif menu == "Allocate":
 
     # In-stock assets (from snapshot)
     if snapshot_df.empty:
-        st.info("No assets available.")
+        st.info("No assets available. Add assets first from the **Add Asset** tab.")
     else:
         is_stock = snapshot_df["current_holder_type"].str.lower().eq("stock")
         stock_df = snapshot_df[is_stock].copy()
@@ -684,7 +810,7 @@ elif menu == "Allocate":
         if stock_df.empty:
             st.info("No in-stock assets available for allocation.")
         else:
-            stock_df["label"] = stock_df["asset_id"] + " - " + stock_df["asset_name"].fillna("")
+            stock_df["label"] = stock_df["asset_id"] + " — " + stock_df["asset_name"].fillna("")
             asset_label = st.selectbox(
                 "Select Asset (In Stock)",
                 stock_df["label"].tolist(),
@@ -706,14 +832,14 @@ elif menu == "Allocate":
                 if not asset_label:
                     st.error("Select an asset.")
                 else:
-                    asset_id = asset_label.split(" - ")[0]
+                    asset_id = asset_label.split(" — ")[0]
                     final_emp_name = manual_emp if manual_emp else emp_name
                     if not final_emp_name or final_emp_name == "<Type manually>":
                         st.error("Please provide an employee name.")
                     else:
                         try:
                             allocate_asset(conn, snapshot_df, asset_id, final_emp_name, alloc_date)
-                            st.success(f"Asset {asset_id} allocated to {final_emp_name}")
+                            st.success(f"Asset **{asset_id}** allocated to **{final_emp_name}**")
                         except Exception as e:
                             st.error(str(e))
 
@@ -748,7 +874,7 @@ elif menu == "Return / Transfer / Scrap":
         if st.button("Save Movement"):
             try:
                 process_movement(conn, snapshot_df, asset_id, action.lower(), move_date, new_emp, remarks)
-                st.success(f"Movement saved for {asset_id} ({action})")
+                st.success(f"Movement saved for **{asset_id}** ({action})")
             except Exception as e:
                 st.error(str(e))
 
@@ -772,4 +898,4 @@ elif menu == "Employees":
         df_emp = pd.read_sql_query("SELECT name, email FROM employees ORDER BY name", conn)
         st.dataframe(df_emp, use_container_width=True)
     else:
-        st.info("No employees saved yet.")
+        st.info("No employees saved yet. Add your team here and they will appear in allocation dropdowns.")
