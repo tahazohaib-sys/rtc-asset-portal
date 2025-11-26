@@ -8,7 +8,11 @@ Glassmorphism UI + functional top bar:
     * List of Assets  → navigates to Assets tab
     * Add an Asset    → navigates to Add Asset tab
     * Search box      → filters asset lists by asset name / ID
-- Dashboard stat cards are clickable (same as before)
+- Dashboard stat cards:
+    * Total Assets          → list of all assets
+    * Total Assets Amount   → list of all assets
+    * Total Allocated Laptops → allocated laptops
+    * Laptops in Stock      → laptops currently in stock
 """
 
 import os
@@ -710,7 +714,6 @@ with left_col:
     )
 
 with search_col:
-    # wrapper for search icon
     st.markdown('<div style="position:relative;">', unsafe_allow_html=True)
     st.markdown('<span class="rtc-search-icon">🔍</span>', unsafe_allow_html=True)
     q = st.text_input(
@@ -726,12 +729,12 @@ with search_col:
 with list_col:
     if st.button("List of Assets", key="top-btn-assets"):
         st.session_state["nav_menu"] = "Assets"
-        st.experimental_rerun()
+        st.rerun()       # <-- fixed: use st.rerun()
 
 with add_col:
     if st.button("Add an Asset", key="top-btn-add"):
         st.session_state["nav_menu"] = "Add Asset"
-        st.experimental_rerun()
+        st.rerun()       # <-- fixed: use st.rerun()
 
 with avatar_col:
     st.markdown('<div class="rtc-avatar">TZ</div>', unsafe_allow_html=True)
