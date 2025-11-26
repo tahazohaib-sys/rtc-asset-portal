@@ -4,6 +4,7 @@
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
 
 Layout:
+- Glassmorphism theme
 - Top bar (logo, search, quick actions)
 - Left navigation sidebar (Dashboard, Assets, Add Asset, Allocate, etc.)
 - Dashboard with clickable stat cards:
@@ -11,8 +12,6 @@ Layout:
     * Total Assets Amount → list of all assets
     * Total Allocated Laptops → allocated laptops
     * Laptops in Stock → laptops in stock
-
-Business behaviour same as previous version.
 """
 
 import os
@@ -478,17 +477,16 @@ st.set_page_config(
     layout="wide",
 )
 
-# Global style – light, soft cards similar to reference UI
+# Glassmorphism theme
 st.markdown(
     """
     <style>
     .stApp {
-        background: radial-gradient(circle at top left, #f7fbff 0, #edf3ff 35%, #e7edf8 100%);
-        color: #0f172a;
+        background: radial-gradient(circle at top left, #0f172a 0, #020617 55%, #020617 100%);
+        color: #e5e7eb;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     }
 
-    /* remove default padding at top */
     .main .block-container {
         padding-top: 1.2rem;
         padding-bottom: 1.5rem;
@@ -497,20 +495,17 @@ st.markdown(
 
     /* Sidebar */
     section[data-testid="stSidebar"] {
-        background: rgba(255,255,255,0.96);
-        border-right: 1px solid rgba(203,213,225,0.9);
-    }
-    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
-        padding-top: 1.0rem;
+        background: rgba(15,23,42,0.95) !important;
+        border-right: 1px solid rgba(30,64,175,0.6);
+        color: #e5e7eb !important;
     }
     section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h1 {
         font-size: 0.85rem !important;
         text-transform: uppercase;
         letter-spacing: .08em;
-        color: #94a3b8;
+        color: #9ca3af !important;
     }
 
-    /* Radio -> pill navigation */
     section[data-testid="stSidebar"] input[type="radio"] {
         visibility: hidden;
         width: 0;
@@ -522,75 +517,58 @@ st.markdown(
         display: flex;
         align-items: center;
         gap: 0.45rem;
-        padding: 0.45rem 0.8rem;
+        padding: 0.45rem 0.9rem;
         margin-bottom: 0.3rem;
-        border-radius: 0.7rem;
+        border-radius: 0.75rem;
         cursor: pointer;
         border: 1px solid transparent;
         transition: all 0.16s ease-out;
         font-size: 0.9rem;
-        color: #0f172a;
+        color: #e5e7eb !important;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
-        background: #e5edff;
-        border-color: #c4d3ff;
+        background: rgba(30,64,175,0.32);
+        border-color: rgba(129,140,248,0.7);
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label[aria-checked="true"] {
+        background: linear-gradient(135deg, rgba(59,130,246,0.85), rgba(129,140,248,0.95));
+        border-color: rgba(191,219,254,0.9);
+        color: #f9fafb !important;
+        box-shadow: 0 12px 30px rgba(37,99,235,0.55);
     }
 
-    /* generic button style (top bar small buttons) */
-    .rtc-top-btn {
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        padding:0.4rem 0.9rem;
-        border-radius:999px;
-        border:1px solid #d0ddff;
-        background:#f6f8ff;
-        color:#1d4ed8;
-        font-size:0.8rem;
-        font-weight:500;
-        cursor:pointer;
-    }
-    .rtc-top-btn-primary {
-        background:#2563eb;
-        border-color:#1d4ed8;
-        color:#f9fafb;
-    }
-
-    .rtc-top-btn:hover {
-        box-shadow:0 8px 18px rgba(37,99,235,0.18);
-        transform:translateY(-0.5px);
-    }
-
-    /* Top navigation bar */
+    /* Top bar glass */
     .rtc-topbar {
-        background: rgba(255,255,255,0.96);
+        background: linear-gradient(135deg, rgba(15,23,42,0.78), rgba(37,99,235,0.16));
         border-radius: 1rem;
-        padding: 0.6rem 1.0rem;
+        padding: 0.7rem 1.1rem;
         margin-bottom: 1.0rem;
         display:flex;
         align-items:center;
         justify-content:space-between;
-        box-shadow:0 18px 45px rgba(148,163,184,0.3);
-        border:1px solid rgba(226,232,240,0.9);
+        box-shadow:0 22px 55px rgba(15,23,42,0.95);
+        border:1px solid rgba(148,163,184,0.6);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
     }
     .rtc-brand {
         display:flex;
         align-items:center;
         gap:0.6rem;
         font-weight:600;
-        color:#1d4ed8;
+        color:#e5edff;
         font-size:1rem;
     }
     .rtc-logo {
-        width:24px;
-        height:24px;
-        border-radius:8px;
+        width:26px;
+        height:26px;
+        border-radius:9px;
         background:linear-gradient(135deg,#2563eb,#4f46e5);
         display:flex;
         align-items:center;
         justify-content:center;
         color:white;
-        font-size:0.75rem;
+        font-size:0.8rem;
     }
     .rtc-top-actions {
         display:flex;
@@ -603,8 +581,9 @@ st.markdown(
     .rtc-search input {
         padding:0.35rem 0.9rem 0.35rem 2.1rem;
         border-radius:999px;
-        border:1px solid #d0ddff;
-        background:#f8fbff;
+        border:1px solid rgba(148,163,184,0.7);
+        background:rgba(15,23,42,0.85);
+        color:#e5e7eb;
         font-size:0.8rem;
         min-width:210px;
         outline:none;
@@ -620,6 +599,30 @@ st.markdown(
         font-size:0.8rem;
         color:#9ca3af;
     }
+    .rtc-top-btn {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        padding:0.4rem 0.9rem;
+        border-radius:999px;
+        border:1px solid rgba(129,140,248,0.85);
+        background:rgba(30,64,175,0.85);
+        color:#e5edff;
+        font-size:0.8rem;
+        font-weight:500;
+        cursor:pointer;
+        box-shadow:0 10px 30px rgba(30,64,175,0.7);
+    }
+    .rtc-top-btn-secondary {
+        background:rgba(15,23,42,0.85);
+        border-color:rgba(148,163,184,0.75);
+        box-shadow:0 10px 25px rgba(15,23,42,0.8);
+        color:#cbd5f5;
+    }
+    .rtc-top-btn:hover {
+        box-shadow:0 14px 35px rgba(59,130,246,0.8);
+        transform:translateY(-1px);
+    }
     .rtc-avatar {
         width:28px;
         height:28px;
@@ -631,9 +634,10 @@ st.markdown(
         justify-content:center;
         font-size:0.78rem;
         font-weight:600;
+        box-shadow:0 10px 30px rgba(248,113,113,0.65);
     }
 
-    /* Page header below topbar */
+    /* Page header */
     .rtc-page-header {
         margin-bottom:0.8rem;
     }
@@ -641,42 +645,48 @@ st.markdown(
         font-size:1.3rem;
         font-weight:600;
         margin-bottom:0.05rem;
-        color:#0f172a;
+        color:#e5e7eb;
     }
     .rtc-page-subtitle {
         font-size:0.85rem;
-        color:#6b7280;
+        color:#9ca3af;
     }
 
-    /* Dashboard stat buttons */
+    /* GLASS STAT CARDS */
     div[data-testid="stButton"][id^="stat-card-"] > button {
         width:100%;
         text-align:left;
         white-space:pre-line;
         padding:0.9rem 1.0rem;
-        border-radius:0.9rem;
-        border:1px solid rgba(226,232,240,0.95);
-        background:#ffffff;
-        color:#111827;
+        border-radius:1rem;
+        border:1px solid rgba(148,163,184,0.7) !important;
+        background:radial-gradient(circle at top left,
+                                   rgba(59,130,246,0.40),
+                                   rgba(15,23,42,0.92)) !important;
+        color:#f9fafb !important;
         font-size:0.9rem;
         font-weight:500;
-        box-shadow:0 18px 45px rgba(148,163,184,0.35);
+        box-shadow:0 22px 60px rgba(8,47,73,0.95);
+        backdrop-filter:blur(20px);
+        -webkit-backdrop-filter:blur(20px);
     }
     div[data-testid="stButton"][id^="stat-card-"] > button:hover {
-        border-color:#c4d3ff;
-        box-shadow:0 22px 55px rgba(129,140,248,0.35);
-        transform:translateY(-1px);
+        border-color:rgba(191,219,254,0.95) !important;
+        box-shadow:0 28px 75px rgba(37,99,235,0.95);
+        transform:translateY(-2px);
     }
 
-    /* make dataframes look like cards */
+    /* Card-like tables */
     .stDataFrame, .stTable {
         border-radius:1rem;
-        border:1px solid rgba(226,232,240,0.9);
-        box-shadow:0 22px 55px rgba(148,163,184,0.35);
-        background:#ffffff;
+        border:1px solid rgba(148,163,184,0.6);
+        box-shadow:0 24px 70px rgba(15,23,42,0.95);
+        background:rgba(15,23,42,0.9);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
     }
 
-    hr { border-color: rgba(203,213,225,0.9); }
+    hr { border-color: rgba(55,65,81,0.8); }
     </style>
     """,
     unsafe_allow_html=True,
@@ -685,7 +695,7 @@ st.markdown(
 conn = get_connection()
 init_db(conn)
 
-# ---------- TOP BAR (logo, search, quick actions) ---------- #
+# ---------- TOP BAR ---------- #
 st.markdown(
     """
     <div class="rtc-topbar">
@@ -698,8 +708,8 @@ st.markdown(
                 <span class="rtc-search-icon">🔍</span>
                 <input type="text" placeholder="Search assets (UI only, not functional)" />
             </div>
-            <button class="rtc-top-btn">List of Assets</button>
-            <button class="rtc-top-btn rtc-top-btn-primary">Add an Asset</button>
+            <button class="rtc-top-btn rtc-top-btn-secondary">List of Assets</button>
+            <button class="rtc-top-btn">Add an Asset</button>
             <div class="rtc-avatar">TZ</div>
         </div>
     </div>
@@ -712,7 +722,9 @@ st.markdown(
     """
     <div class="rtc-page-header">
         <div class="rtc-page-title">Dashboard</div>
-        <div class="rtc-page-subtitle">Dashboard &amp; statistics for RTC League asset management.</div>
+        <div class="rtc-page-subtitle">
+            Dashboard &amp; statistics for RTC League asset management.
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -726,7 +738,6 @@ menu = st.sidebar.radio(
 
 snapshot_df = get_snapshot(conn)
 
-# Keep state for which dashboard detail is shown
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
 
