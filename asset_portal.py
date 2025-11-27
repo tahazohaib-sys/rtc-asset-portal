@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
-Clean, aligned dashboard layout (UI v2).
+Clean, aligned dashboard layout (UI v2.1).
 """
 
 import os
@@ -472,10 +472,15 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------- GLOBAL THEME (generic CSS, robust selectors) ---------- #
+# ---------- GLOBAL THEME (CSS) ---------- #
 st.markdown(
     """
     <style>
+    /* Remove Streamlit top black header */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+
     .stApp {
         background: #f5f7fb;
         color: #111827;
@@ -486,6 +491,11 @@ st.markdown(
         padding-top: 0.8rem;
         padding-bottom: 1.5rem;
         max-width: 1200px;
+    }
+
+    /* If any old first text-input exists above our header, hide it */
+    .main .block-container > div:first-child input[type="text"] {
+        display: none !important;
     }
 
     /* Sidebar */
@@ -500,7 +510,12 @@ st.markdown(
         letter-spacing: .08em;
         color: #6b7280 !important;
     }
-    /* Make radio options look like cards */
+    /* Make all sidebar labels black and clearer */
+    section[data-testid="stSidebar"] label {
+        color: #111827 !important;
+        font-size: 0.9rem !important;
+    }
+    /* Radio options look like chips/cards */
     section[data-testid="stSidebar"] div[role="radiogroup"] > label {
         display: flex !important;
         align-items: center;
@@ -511,8 +526,6 @@ st.markdown(
         cursor: pointer;
         border: 1px solid transparent;
         transition: all 0.15s ease-out;
-        font-size: 0.9rem;
-        color: #111827 !important;
         background: transparent;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
@@ -526,7 +539,7 @@ st.markdown(
         box-shadow: 0 8px 18px rgba(15,23,42,0.35);
     }
 
-    /* Header white bar */
+    /* Header white box */
     .rtc-header-box {
         background: #ffffff;
         border-radius: 0.9rem;
@@ -572,9 +585,8 @@ st.markdown(
         color: #9ca3af !important;
     }
 
-    /* Top header buttons */
+    /* Generic buttons (header & others) */
     div[data-testid="stButton"] > button {
-        width: 100%;
         border-radius: 999px;
         border: 1px solid #d1d5db !important;
         background: #ffffff !important;
@@ -602,16 +614,22 @@ st.markdown(
         margin-bottom: 0.7rem;
     }
 
-    /* KPI card container – use columns in python, this just styles buttons when used as cards */
-    .kpi-card > div[data-testid="stButton"] > button {
-        text-align: left;
-        white-space: pre-line;
-        padding: 0.9rem 1.0rem;
+    /* KPI cards – center label & value, second row in middle */
+    .kpi-card button {
+        width: 100%;
         border-radius: 0.9rem;
         box-shadow: 0 12px 26px rgba(15,23,42,0.12);
         border: 1px solid #d1d5db !important;
         background: #ffffff !important;
         font-size: 0.86rem;
+        white-space: pre-line !important;      /* allow line break */
+        text-align: center !important;         /* centered text */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        line-height: 1.3;
+        padding: 0.9rem 1.0rem;
     }
 
     /* Tables */
@@ -640,7 +658,7 @@ if "search_query" not in st.session_state:
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
 
-# ---------- HEADER (one white bar) ---------- #
+# ---------- HEADER (one white bar only) ---------- #
 with st.container():
     st.markdown('<div class="rtc-header-box">', unsafe_allow_html=True)
     col_left, col_mid, col_right = st.columns([3, 4, 3])
@@ -654,7 +672,7 @@ with st.container():
                 <div>
                     <div class="rtc-header-title">RTC League Asset Management</div>
                     <div class="rtc-header-sub">
-                        Fixed Asset Dashboard • UI v2
+                        Fixed Asset Dashboard • UI v2.1
                     </div>
                 </div>
             </div>
@@ -711,7 +729,7 @@ if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
     card_clicked = None
 
-    # KPI cards – wrapped in containers with class "kpi-card" so CSS picks them up
+    # KPI cards
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         with st.container():
