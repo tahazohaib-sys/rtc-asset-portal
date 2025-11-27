@@ -3,16 +3,14 @@
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
 
-Glassmorphism UI + functional top bar:
-- Top bar buttons:
-    * List of Assets  → navigates to Assets tab
-    * Add an Asset    → navigates to Add Asset tab
-    * Search box      → filters asset lists by asset name / ID
-- Dashboard stat cards:
-    * Total Assets          → list of all assets
-    * Total Assets Amount   → list of all assets
-    * Total Allocated Laptops → allocated laptops
-    * Laptops in Stock      → laptops currently in stock
+Light corporate dashboard theme inspired by:
+"Fixed Asset Management Dashboard for Tracking Equipment Performance"
+
+Features:
+- Top bar with title, search box, and quick navigation buttons
+- KPI stat cards in a blue corporate style
+- Clean white background and blue accent palette
+- Sidebar navigation kept, but styled like a professional app
 """
 
 import os
@@ -484,34 +482,36 @@ st.set_page_config(
     layout="wide",
 )
 
-# Glassmorphism theme + component styling
+# ---------- GLOBAL THEME (LIGHT, BLUE, CORPORATE) ---------- #
 st.markdown(
     """
     <style>
+    /* App background & typography */
     .stApp {
-        background: radial-gradient(circle at top left, #0f172a 0, #020617 55%, #020617 100%);
-        color: #e5e7eb;
+        background: #f7f9fc;
+        color: #111827;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     }
 
     .main .block-container {
-        padding-top: 1.2rem;
+        padding-top: 1.0rem;
         padding-bottom: 1.5rem;
         max-width: 1200px;
     }
 
     /* Sidebar */
     section[data-testid="stSidebar"] {
-        background: rgba(15,23,42,0.95) !important;
-        border-right: 1px solid rgba(30,64,175,0.6);
-        color: #e5e7eb !important;
+        background: #ffffff !important;
+        border-right: 1px solid #e5e7eb;
+        box-shadow: 4px 0 18px rgba(15,23,42,0.04);
     }
     section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h1 {
         font-size: 0.85rem !important;
         text-transform: uppercase;
         letter-spacing: .08em;
-        color: #9ca3af !important;
+        color: #6b7280 !important;
     }
+
     section[data-testid="stSidebar"] input[type="radio"] {
         visibility: hidden;
         width: 0;
@@ -523,82 +523,85 @@ st.markdown(
         display: flex;
         align-items: center;
         gap: 0.45rem;
-        padding: 0.45rem 0.9rem;
-        margin-bottom: 0.3rem;
+        padding: 0.45rem 0.75rem;
+        margin-bottom: 0.25rem;
         border-radius: 0.75rem;
         cursor: pointer;
         border: 1px solid transparent;
-        transition: all 0.16s ease-out;
+        transition: all 0.15s ease-out;
         font-size: 0.9rem;
-        color: #e5e7eb !important;
+        color: #111827 !important;
+        background: transparent;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
-        background: rgba(30,64,175,0.32);
-        border-color: rgba(129,140,248,0.7);
+        background: #eef2ff;
+        border-color: #c7d2fe;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label[aria-checked="true"] {
-        background: linear-gradient(135deg, rgba(59,130,246,0.85), rgba(129,140,248,0.95));
-        border-color: rgba(191,219,254,0.9);
+        background: #2563eb;
+        border-color: #1d4ed8;
         color: #f9fafb !important;
-        box-shadow: 0 12px 30px rgba(37,99,235,0.55);
+        box-shadow: 0 8px 18px rgba(37,99,235,0.35);
     }
 
-    /* Top bar wrapper */
-    .rtc-topbar-glass {
-        background: linear-gradient(135deg, rgba(15,23,42,0.78), rgba(37,99,235,0.16));
-        border-radius: 1rem;
-        padding: 0.7rem 1.1rem;
-        margin-bottom: 1.0rem;
-        box-shadow:0 22px 55px rgba(15,23,42,0.95);
-        border:1px solid rgba(148,163,184,0.6);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
+    /* Top bar */
+    .rtc-topbar {
+        background: #ffffff;
+        border-radius: 0.9rem;
+        padding: 0.8rem 1.2rem;
+        margin-bottom: 0.9rem;
+        box-shadow: 0 10px 25px rgba(15,23,42,0.06);
+        border: 1px solid #e5e7eb;
     }
     .rtc-brand {
-        display:flex;
-        align-items:center;
-        gap:0.6rem;
-        font-weight:600;
-        color:#e5edff;
-        font-size:1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+    .rtc-brand-title {
+        font-size: 1.0rem;
+        font-weight: 600;
+        color: #111827;
+    }
+    .rtc-brand-subtitle {
+        font-size: 0.8rem;
+        color: #6b7280;
     }
     .rtc-logo {
-        width:26px;
-        height:26px;
-        border-radius:9px;
-        background:linear-gradient(135deg,#2563eb,#4f46e5);
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        background: linear-gradient(135deg,#2563eb,#4f46e5);
         display:flex;
         align-items:center;
         justify-content:center;
         color:white;
-        font-size:0.8rem;
-    }
-    .rtc-avatar {
-        width:28px;
-        height:28px;
-        border-radius:999px;
-        background:#f97316;
-        color:white;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:0.78rem;
+        font-size:0.9rem;
         font-weight:600;
-        box-shadow:0 10px 30px rgba(248,113,113,0.65);
+        margin-right: 0.35rem;
+    }
+    .rtc-brand-row {
+        display:flex;
+        align-items:center;
     }
 
-    /* Search in top bar */
-    .rtc-topbar-glass input[type="text"] {
-        padding:0.35rem 0.9rem 0.35rem 2.1rem;
-        border-radius:999px;
-        border:1px solid rgba(148,163,184,0.7);
-        background:rgba(15,23,42,0.85);
-        color:#e5e7eb;
-        font-size:0.8rem;
-        outline:none;
+    /* Search box in top bar */
+    .rtc-search-wrap {
+        position: relative;
+        width: 100%;
     }
-    .rtc-topbar-glass input[type="text"]::placeholder {
-        color:#9ca3af;
+    .rtc-search-wrap input[type="text"] {
+        width: 100%;
+        padding: 0.35rem 0.9rem 0.35rem 2.1rem;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #111827;
+        font-size: 0.8rem;
+        outline: none;
+    }
+    .rtc-search-wrap input[type="text"]::placeholder {
+        color: #9ca3af;
     }
     .rtc-search-icon {
         position:absolute;
@@ -611,77 +614,81 @@ st.markdown(
 
     /* Top bar buttons */
     div[data-testid="stButton"][id^="top-btn-"] > button {
-        width:100%;
-        padding:0.4rem 0.7rem;
-        border-radius:999px;
-        border:1px solid rgba(129,140,248,0.85);
-        background:rgba(30,64,175,0.85);
-        color:#e5edff;
-        font-size:0.8rem;
-        font-weight:500;
-        cursor:pointer;
-        box-shadow:0 10px 30px rgba(30,64,175,0.7);
+        width: 100%;
+        padding: 0.4rem 0.7rem;
+        border-radius: 999px;
+        border: 1px solid #2563eb;
+        background: #2563eb;
+        color: #f9fafb;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(37,99,235,0.35);
     }
     div[data-testid="stButton"][id^="top-btn-"] > button:hover {
-        box-shadow:0 14px 35px rgba(59,130,246,0.8);
-        transform:translateY(-1px);
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        box-shadow: 0 12px 28px rgba(37,99,235,0.4);
+        transform: translateY(-1px);
     }
     div[data-testid="stButton"][id="top-btn-assets"] > button {
-        background:rgba(15,23,42,0.85);
-        border-color:rgba(148,163,184,0.75);
-        box-shadow:0 10px 25px rgba(15,23,42,0.8);
-        color:#cbd5f5;
+        background: #ffffff;
+        color: #111827;
+        border-color: #d1d5db;
+        box-shadow: 0 6px 14px rgba(15,23,42,0.08);
+    }
+    div[data-testid="stButton"][id="top-btn-assets"] > button:hover {
+        background: #f3f4f6;
     }
 
     /* Page header */
     .rtc-page-header {
-        margin-bottom:0.8rem;
+        margin-bottom: 0.7rem;
     }
     .rtc-page-title {
-        font-size:1.3rem;
-        font-weight:600;
-        margin-bottom:0.05rem;
-        color:#e5e7eb;
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 0.05rem;
+        color: #111827;
     }
     .rtc-page-subtitle {
-        font-size:0.85rem;
-        color:#9ca3af;
+        font-size: 0.82rem;
+        color: #6b7280;
     }
 
-    /* Glass stat cards */
+    /* KPI stat cards */
     div[data-testid="stButton"][id^="stat-card-"] > button {
-        width:100%;
-        text-align:left;
-        white-space:pre-line;
-        padding:0.9rem 1.0rem;
-        border-radius:1rem;
-        border:1px solid rgba(148,163,184,0.7) !important;
-        background:radial-gradient(circle at top left,
-                                   rgba(59,130,246,0.40),
-                                   rgba(15,23,42,0.92)) !important;
-        color:#f9fafb !important;
-        font-size:0.9rem;
-        font-weight:500;
-        box-shadow:0 22px 60px rgba(8,47,73,0.95);
-        backdrop-filter:blur(20px);
-        -webkit-backdrop-filter:blur(20px);
+        width: 100%;
+        text-align: left;
+        white-space: pre-line;
+        padding: 0.9rem 1.0rem;
+        border-radius: 0.85rem;
+        border: 1px solid #e5e7eb !important;
+        background: linear-gradient(135deg,#2563eb,#1d4ed8) !important;
+        color: #f9fafb !important;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 18px 35px rgba(37,99,235,0.35);
     }
     div[data-testid="stButton"][id^="stat-card-"] > button:hover {
-        border-color:rgba(191,219,254,0.95) !important;
-        box-shadow:0 28px 75px rgba(37,99,235,0.95);
-        transform:translateY(-2px);
+        box-shadow: 0 22px 45px rgba(37,99,235,0.45);
+        transform: translateY(-2px);
     }
 
+    /* DataFrame / tables */
     .stDataFrame, .stTable {
-        border-radius:1rem;
-        border:1px solid rgba(148,163,184,0.6);
-        box-shadow:0 24px 70px rgba(15,23,42,0.95);
-        background:rgba(15,23,42,0.9);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
+        border-radius: 0.9rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 18px 30px rgba(15,23,42,0.06);
+        background: #ffffff;
     }
 
-    hr { border-color: rgba(55,65,81,0.8); }
+    hr { border-color: #e5e7eb; }
+
+    /* Small tweaks */
+    .stSubheader, h3, h4 {
+        color: #111827;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -695,33 +702,38 @@ if "nav_menu" not in st.session_state:
     st.session_state["nav_menu"] = "Dashboard"
 if "search_query" not in st.session_state:
     st.session_state["search_query"] = ""
+if "dashboard_view" not in st.session_state:
+    st.session_state["dashboard_view"] = "none"
 
 # ---------- TOP BAR (functional) ---------- #
-st.markdown('<div class="rtc-topbar-glass">', unsafe_allow_html=True)
-left_col, spacer_col, search_col, list_col, add_col, avatar_col = st.columns(
-    [3, 0.2, 3, 1.2, 1.4, 0.7]
-)
+st.markdown('<div class="rtc-topbar">', unsafe_allow_html=True)
+left_col, search_col, list_col, add_col = st.columns([3, 4, 1.4, 1.6])
 
 with left_col:
     st.markdown(
         """
         <div class="rtc-brand">
-            <div class="rtc-logo">R</div>
-            <div>RTC League Assets</div>
+            <div class="rtc-brand-row">
+                <div class="rtc-logo">R</div>
+                <div class="rtc-brand-title">RTC League Asset Management</div>
+            </div>
+            <div class="rtc-brand-subtitle">
+                Fixed Asset Dashboard for tracking allocation, stock, and equipment performance.
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 with search_col:
-    st.markdown('<div style="position:relative;">', unsafe_allow_html=True)
+    st.markdown('<div class="rtc-search-wrap">', unsafe_allow_html=True)
     st.markdown('<span class="rtc-search-icon">🔍</span>', unsafe_allow_html=True)
     q = st.text_input(
         "Search assets",
         value=st.session_state["search_query"],
         label_visibility="collapsed",
         key="top-search",
-        placeholder="Search assets by ID or name",
+        placeholder="Search by asset ID or name",
     )
     st.session_state["search_query"] = q
     st.markdown("</div>", unsafe_allow_html=True)
@@ -729,15 +741,12 @@ with search_col:
 with list_col:
     if st.button("List of Assets", key="top-btn-assets"):
         st.session_state["nav_menu"] = "Assets"
-        st.rerun()       # <-- fixed: use st.rerun()
+        st.rerun()
 
 with add_col:
     if st.button("Add an Asset", key="top-btn-add"):
         st.session_state["nav_menu"] = "Add Asset"
-        st.rerun()       # <-- fixed: use st.rerun()
-
-with avatar_col:
-    st.markdown('<div class="rtc-avatar">TZ</div>', unsafe_allow_html=True)
+        st.rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -745,9 +754,9 @@ st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(
     """
     <div class="rtc-page-header">
-        <div class="rtc-page-title">Dashboard</div>
+        <div class="rtc-page-title">Fixed Asset Management Dashboard</div>
         <div class="rtc-page-subtitle">
-            Dashboard &amp; statistics for RTC League asset management.
+            Overview of asset purchases, allocations, and stock positions across RTC League.
         </div>
     </div>
     """,
@@ -760,12 +769,8 @@ menu = st.sidebar.radio(
     ["Dashboard", "Assets", "Add Asset", "Allocate", "Return / Transfer / Scrap", "Employees"],
     key="nav_menu",
 )
+
 snapshot_df = get_snapshot(conn)
-
-# Dashboard drill-down state
-if "dashboard_view" not in st.session_state:
-    st.session_state["dashboard_view"] = "none"
-
 search_query = st.session_state["search_query"]
 
 # ---------------------- DASHBOARD ---------------------- #
