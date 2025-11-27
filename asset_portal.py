@@ -2,7 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
-Clean, aligned dashboard layout (UI v2.1).
+
+Light corporate dashboard theme inspired by:
+"Fixed Asset Management Dashboard for Tracking Equipment Performance"
+
+Features:
+- Top bar with title, search box, and quick navigation buttons
+- KPI stat cards in a blue corporate style
+- Clean white background and blue accent palette
+- Sidebar navigation kept, but styled like a professional app
 """
 
 import os
@@ -62,7 +70,7 @@ def init_db(conn: sqlite3.Connection):
         """
     )
 
-    # Employees
+    # Employees (simple master)
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS employees (
@@ -119,6 +127,7 @@ def parse_date_str(s: str | None) -> date | None:
 # ---------------------- SNAPSHOT LOGIC ---------------------- #
 
 def get_snapshot(conn: sqlite3.Connection) -> pd.DataFrame:
+    """Builds a snapshot similar to Asset_Snapshot sheet."""
     assets = pd.read_sql_query("SELECT * FROM assets_master", conn)
     if assets.empty:
         return pd.DataFrame(
@@ -253,6 +262,7 @@ def get_laptops_in_stock(snapshot: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_search_filter(df: pd.DataFrame, query: str) -> pd.DataFrame:
+    """Filter by asset_id or asset_name containing query (case-insensitive)."""
     q = (query or "").strip().lower()
     if not q or df.empty:
         return df
@@ -472,30 +482,35 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------- GLOBAL THEME (CSS) ---------- #
+# ---------- GLOBAL THEME (LIGHT, BLUE, CORPORATE) ---------- #
 st.markdown(
     """
     <style>
-    /* Remove Streamlit top black header */
+    /* Remove Streamlit black top header */
     header[data-testid="stHeader"] {
         display: none !important;
     }
 
+    /* App background & typography */
     .stApp {
-        background: #f5f7fb;
+        background: #f7f9fc;
         color: #111827;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     }
 
     .main .block-container {
-        padding-top: 0.8rem;
+        padding-top: 1.0rem;
         padding-bottom: 1.5rem;
         max-width: 1200px;
     }
 
-    /* If any old first text-input exists above our header, hide it */
+    /* Hide any stray first text input (old big white pill above header) */
     .main .block-container > div:first-child input[type="text"] {
         display: none !important;
+    }
+    .main .block-container > div:first-child {
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     /* Sidebar */
@@ -504,144 +519,203 @@ st.markdown(
         border-right: 1px solid #e5e7eb;
         box-shadow: 4px 0 18px rgba(15,23,42,0.04);
     }
-    section[data-testid="stSidebar"] h2 {
-        font-size: 0.8rem !important;
+    section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h1 {
+        font-size: 0.85rem !important;
         text-transform: uppercase;
         letter-spacing: .08em;
         color: #6b7280 !important;
     }
-    /* Make all sidebar labels black and clearer */
-    section[data-testid="stSidebar"] label {
-        color: #111827 !important;
-        font-size: 0.9rem !important;
+
+    section[data-testid="stSidebar"] input[type="radio"] {
+        visibility: hidden;
+        width: 0;
+        height: 0;
+        margin: 0;
+        padding: 0;
     }
-    /* Radio options look like chips/cards */
     section[data-testid="stSidebar"] div[role="radiogroup"] > label {
-        display: flex !important;
+        display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0.8rem;
-        margin-bottom: 0.3rem;
-        border-radius: 0.8rem;
+        gap: 0.45rem;
+        padding: 0.45rem 0.75rem;
+        margin-bottom: 0.25rem;
+        border-radius: 0.75rem;
         cursor: pointer;
         border: 1px solid transparent;
         transition: all 0.15s ease-out;
+        font-size: 0.9rem;
+        color: #111827 !important;
         background: transparent;
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label span {
+        color: #111827 !important;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
         background: #eef2ff;
         border-color: #c7d2fe;
     }
+    /* Selected nav: white card with black text */
     section[data-testid="stSidebar"] div[role="radiogroup"] > label[aria-checked="true"] {
-        background: #111827 !important;
+        background: #ffffff !important;
         border-color: #111827 !important;
-        color: #f9fafb !important;
-        box-shadow: 0 8px 18px rgba(15,23,42,0.35);
+        color: #111827 !important;
+        box-shadow: 0 8px 18px rgba(15,23,42,0.20);
+    }
+    section[data-testid="stSidebar"] div[role="radiogroup"] > label[aria-checked="true"] span {
+        color: #111827 !important;
+        font-weight: 600;
     }
 
-    /* Header white box */
-    .rtc-header-box {
+    /* Top bar */
+    .rtc-topbar {
         background: #ffffff;
         border-radius: 0.9rem;
-        padding: 0.9rem 1.1rem;
-        margin-bottom: 1.0rem;
-        box-shadow: 0 14px 30px rgba(15,23,42,0.08);
+        padding: 0.8rem 1.2rem;
+        margin-bottom: 0.9rem;
+        box-shadow: 0 10px 25px rgba(15,23,42,0.06);
         border: 1px solid #e5e7eb;
     }
-    .rtc-logo-small {
-        width: 28px;
-        height: 28px;
-        border-radius: 7px;
+    .rtc-brand {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+    .rtc-brand-title {
+        font-size: 1.0rem;
+        font-weight: 600;
+        color: #111827;
+    }
+    .rtc-brand-subtitle {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+    .rtc-logo {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
         background: linear-gradient(135deg,#2563eb,#4f46e5);
         display:flex;
         align-items:center;
         justify-content:center;
         color:white;
-        font-size:0.95rem;
+        font-size:0.9rem;
         font-weight:600;
-        margin-right:0.55rem;
+        margin-right: 0.35rem;
     }
-    .rtc-header-title {
-        font-size: 1.0rem;
-        font-weight: 600;
-        color: #111827;
-    }
-    .rtc-header-sub {
-        font-size: 0.78rem;
-        color: #6b7280;
+    .rtc-brand-row {
+        display:flex;
+        align-items:center;
     }
 
-    /* Search in header */
+    /* Search box in top bar */
+    .rtc-search-wrap {
+        position: relative;
+        width: 100%;
+    }
     .rtc-search-wrap input[type="text"] {
         width: 100%;
-        padding: 0.45rem 0.9rem;
+        padding: 0.35rem 0.9rem 0.35rem 2.1rem;
         border-radius: 999px;
         border: 1px solid #d1d5db;
-        background: #ffffff !important;
-        color: #111827 !important;
-        font-size: 0.83rem;
+        background: #f9fafb;
+        color: #111827;
+        font-size: 0.8rem;
+        outline: none;
     }
     .rtc-search-wrap input[type="text"]::placeholder {
-        color: #9ca3af !important;
+        color: #9ca3af;
+    }
+    .rtc-search-icon {
+        position:absolute;
+        left:0.65rem;
+        top:50%;
+        transform:translateY(-50%);
+        font-size:0.8rem;
+        color:#9ca3af;
     }
 
-    /* Generic buttons (header & others) */
-    div[data-testid="stButton"] > button {
+    /* Top bar buttons */
+    div[data-testid="stButton"][id^="top-btn-"] > button {
+        width: 100%;
+        padding: 0.4rem 0.7rem;
         border-radius: 999px;
-        border: 1px solid #d1d5db !important;
-        background: #ffffff !important;
-        color: #111827 !important;
-        font-size: 0.83rem;
+        border: 1px solid #2563eb;
+        background: #2563eb;
+        color: #f9fafb;
+        font-size: 0.8rem;
         font-weight: 500;
-        padding: 0.45rem 0.8rem;
-        box-shadow: 0 6px 15px rgba(15,23,42,0.08);
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(37,99,235,0.35);
     }
-    div[data-testid="stButton"] > button:hover {
-        background: #f3f4f6 !important;
-        box-shadow: 0 10px 22px rgba(15,23,42,0.12);
+    div[data-testid="stButton"][id^="top-btn-"] > button:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        box-shadow: 0 12px 28px rgba(37,99,235,0.40);
+        transform: translateY(-1px);
+    }
+    div[data-testid="stButton"][id="top-btn-assets"] > button {
+        background: #ffffff;
+        color: #111827;
+        border-color: #d1d5db;
+        box-shadow: 0 6px 14px rgba(15,23,42,0.08);
+    }
+    div[data-testid="stButton"][id="top-btn-assets"] > button:hover {
+        background: #f3f4f6;
     }
 
-    /* Page title & subtitle */
+    /* Page header */
+    .rtc-page-header {
+        margin-bottom: 0.7rem;
+    }
     .rtc-page-title {
         font-size: 1.35rem;
         font-weight: 600;
         margin-bottom: 0.05rem;
         color: #111827;
     }
-    .rtc-page-sub {
+    .rtc-page-subtitle {
         font-size: 0.82rem;
         color: #6b7280;
-        margin-bottom: 0.7rem;
     }
 
-    /* KPI cards – center label & value, second row in middle */
-    .kpi-card button {
+    /* KPI stat cards – centered with value on second line */
+    div[data-testid="stButton"][id^="stat-card-"] > button {
         width: 100%;
-        border-radius: 0.9rem;
-        box-shadow: 0 12px 26px rgba(15,23,42,0.12);
-        border: 1px solid #d1d5db !important;
-        background: #ffffff !important;
-        font-size: 0.86rem;
-        white-space: pre-line !important;      /* allow line break */
-        text-align: center !important;         /* centered text */
+        white-space: pre-line;
+        padding: 0.9rem 1.0rem;
+        border-radius: 0.85rem;
+        border: 1px solid #e5e7eb !important;
+        background: linear-gradient(135deg,#2563eb,#1d4ed8) !important;
+        color: #f9fafb !important;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 18px 35px rgba(37,99,235,0.35);
+        text-align: center !important;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
         line-height: 1.3;
-        padding: 0.9rem 1.0rem;
+    }
+    div[data-testid="stButton"][id^="stat-card-"] > button:hover {
+        box-shadow: 0 22px 45px rgba(37,99,235,0.45);
+        transform: translateY(-2px);
     }
 
-    /* Tables */
+    /* DataFrame / tables */
     .stDataFrame, .stTable {
-        border-radius: 0.8rem;
+        border-radius: 0.9rem;
         border: 1px solid #e5e7eb;
-        box-shadow: 0 14px 30px rgba(15,23,42,0.06);
+        box-shadow: 0 18px 30px rgba(15,23,42,0.06);
         background: #ffffff;
     }
 
     hr { border-color: #e5e7eb; }
 
+    /* Small tweaks */
+    .stSubheader, h3, h4 {
+        color: #111827;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -658,63 +732,65 @@ if "search_query" not in st.session_state:
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
 
-# ---------- HEADER (one white bar only) ---------- #
-with st.container():
-    st.markdown('<div class="rtc-header-box">', unsafe_allow_html=True)
-    col_left, col_mid, col_right = st.columns([3, 4, 3])
+# ---------- TOP BAR (functional) ---------- #
+st.markdown('<div class="rtc-topbar">', unsafe_allow_html=True)
+left_col, search_col, list_col, add_col = st.columns([3, 4, 1.4, 1.6])
 
-    # LEFT: title + version
-    with col_left:
-        st.markdown(
-            """
-            <div style="display:flex;align-items:flex-start;">
-                <div class="rtc-logo-small">R</div>
-                <div>
-                    <div class="rtc-header-title">RTC League Asset Management</div>
-                    <div class="rtc-header-sub">
-                        Fixed Asset Dashboard • UI v2.1
-                    </div>
-                </div>
+with left_col:
+    st.markdown(
+        """
+        <div class="rtc-brand">
+            <div class="rtc-brand-row">
+                <div class="rtc-logo">R</div>
+                <div class="rtc-brand-title">RTC League Asset Management</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <div class="rtc-brand-subtitle">
+                Fixed Asset Dashboard for tracking allocation, stock, and equipment performance.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # MIDDLE: search
-    with col_mid:
-        st.markdown('<div class="rtc-search-wrap">', unsafe_allow_html=True)
-        q = st.text_input(
-            "Search assets",
-            value=st.session_state["search_query"],
-            label_visibility="collapsed",
-            key="top-search",
-            placeholder="Search by asset ID or name",
-        )
-        st.session_state["search_query"] = q
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # RIGHT: header buttons
-    with col_right:
-        b1, b2 = st.columns(2)
-        with b1:
-            if st.button("List of Assets", key="btn-assets"):
-                st.session_state["nav_menu"] = "Assets"
-                st.rerun()
-        with b2:
-            if st.button("Add Asset", key="btn-add"):
-                st.session_state["nav_menu"] = "Add Asset"
-                st.rerun()
-
+with search_col:
+    st.markdown('<div class="rtc-search-wrap">', unsafe_allow_html=True)
+    st.markdown('<span class="rtc-search-icon">🔍</span>', unsafe_allow_html=True)
+    q = st.text_input(
+        "Search assets",
+        value=st.session_state["search_query"],
+        label_visibility="collapsed",
+        key="top-search",
+        placeholder="Search by asset ID or name",
+    )
+    st.session_state["search_query"] = q
     st.markdown("</div>", unsafe_allow_html=True)
 
+with list_col:
+    if st.button("List of Assets", key="top-btn-assets"):
+        st.session_state["nav_menu"] = "Assets"
+        st.rerun()
+
+with add_col:
+    if st.button("Add an Asset", key="top-btn-add"):
+        st.session_state["nav_menu"] = "Add Asset"
+        st.rerun()
+
+st.markdown("</div>", unsafe_allow_html=True)
+
 # ---------- PAGE HEADER ---------- #
-st.markdown('<div class="rtc-page-title">Fixed Asset Management Dashboard</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="rtc-page-sub">Overview of asset purchases, allocations, and stock positions across RTC League.</div>',
+    """
+    <div class="rtc-page-header">
+        <div class="rtc-page-title">Fixed Asset Management Dashboard</div>
+        <div class="rtc-page-subtitle">
+            Overview of asset purchases, allocations, and stock positions across RTC League.
+        </div>
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
-# ---------- SIDEBAR NAV ---------- #
+# ---------- SIDEBAR NAV (linked with top bar) ---------- #
 menu = st.sidebar.radio(
     "Navigation",
     ["Dashboard", "Assets", "Add Asset", "Allocate", "Return / Transfer / Scrap", "Employees"],
@@ -729,36 +805,23 @@ if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
     card_clicked = None
 
-    # KPI cards
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        with st.container():
-            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-            text = f"Total Assets\n{stats['total_assets']:,}"
-            if st.button(text, key="kpi-total-assets"):
-                card_clicked = "all"
-            st.markdown("</div>", unsafe_allow_html=True)
+        label = f"Total Assets\n{stats['total_assets']:,}"
+        if st.button(label, key="stat-card-total-assets", help="Show list of all assets"):
+            card_clicked = "all"
     with c2:
-        with st.container():
-            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-            text = f"Total Asset Amount\n{stats['total_amount']:,.0f}"
-            if st.button(text, key="kpi-total-amount"):
-                card_clicked = "all"
-            st.markdown("</div>", unsafe_allow_html=True)
+        label = f"Total Assets Amount\n{stats['total_amount']:,.0f}"
+        if st.button(label, key="stat-card-total-amount", help="Show list of all assets"):
+            card_clicked = "all"
     with c3:
-        with st.container():
-            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-            text = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
-            if st.button(text, key="kpi-allocated"):
-                card_clicked = "allocated"
-            st.markdown("</div>", unsafe_allow_html=True)
+        label = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
+        if st.button(label, key="stat-card-allocated", help="Show laptops currently allocated"):
+            card_clicked = "allocated"
     with c4:
-        with st.container():
-            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-            text = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
-            if st.button(text, key="kpi-stock"):
-                card_clicked = "stock"
-            st.markdown("</div>", unsafe_allow_html=True)
+        label = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
+        if st.button(label, key="stat-card-stock", help="Show laptops currently in stock"):
+            card_clicked = "stock"
 
     if card_clicked:
         st.session_state["dashboard_view"] = card_clicked
