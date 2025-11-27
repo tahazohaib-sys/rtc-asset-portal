@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
-
-Light corporate dashboard theme inspired by:
-"Fixed Asset Management Dashboard for Tracking Equipment Performance"
+Aligned light corporate dashboard theme
 """
 
 import os
@@ -476,7 +474,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------- GLOBAL THEME (LIGHT, BLUE, CORPORATE) ---------- #
+# ---------- GLOBAL THEME (LIGHT, BLUE, CLEAN) ---------- #
 st.markdown(
     """
     <style>
@@ -536,26 +534,14 @@ st.markdown(
         box-shadow: 0 8px 18px rgba(37,99,235,0.35);
     }
 
-    /* Top bar container */
-    .rtc-topbar {
+    /* Header container */
+    .rtc-header {
         background: #ffffff;
         border-radius: 0.9rem;
-        padding: 0.7rem 1.0rem;
-        margin-bottom: 0.8rem;
+        padding: 0.9rem 1.1rem;
+        margin-bottom: 0.9rem;
         box-shadow: 0 10px 25px rgba(15,23,42,0.06);
         border: 1px solid #e5e7eb;
-    }
-    .rtc-topbar-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-
-    .rtc-brand-block {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
     }
     .rtc-logo {
         width: 26px;
@@ -568,81 +554,73 @@ st.markdown(
         color:white;
         font-size:0.9rem;
         font-weight:600;
+        margin-right:0.55rem;
     }
-    .rtc-brand-text-main {
+    .rtc-header-title {
         font-size: 0.95rem;
         font-weight: 600;
         color: #111827;
     }
-    .rtc-brand-text-sub {
+    .rtc-header-sub {
         font-size: 0.75rem;
         color: #6b7280;
     }
 
     /* Search */
-    .rtc-search-wrap {
-        flex: 1;
-        position: relative;
-        max-width: 420px;
-    }
-    .rtc-search-wrap input[type="text"] {
+    .rtc-search-wrapper {
         width: 100%;
-        padding: 0.35rem 0.9rem 0.35rem 2.0rem;
+    }
+    .rtc-search-wrapper input[type="text"] {
+        width: 100%;
+        padding: 0.35rem 0.9rem 0.35rem 2.1rem;
         border-radius: 999px;
         border: 1px solid #d1d5db;
         background: #f9fafb;
         color: #111827;
         font-size: 0.8rem;
-        outline: none;
     }
-    .rtc-search-wrap input[type="text"]::placeholder {
+    .rtc-search-wrapper input[type="text"]::placeholder {
         color: #9ca3af;
     }
     .rtc-search-icon {
-        position:absolute;
-        left:0.65rem;
-        top:50%;
-        transform:translateY(-50%);
-        font-size:0.8rem;
-        color:#9ca3af;
+        position: relative;
+        left: 0.55rem;
+        top: 1.7rem;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        pointer-events: none;
     }
 
-    /* Top buttons (right side) */
-    .rtc-top-buttons {
-        display: flex;
-        gap: 0.5rem;
-    }
+    /* Header buttons */
     div[data-testid="stButton"][id^="top-btn-"] > button {
-        padding: 0.35rem 0.8rem;
+        width: 100%;
+        padding: 0.35rem 0.75rem;
         border-radius: 999px;
         border: 1px solid #d1d5db;
         background: #ffffff;
         color: #111827;
         font-size: 0.8rem;
         font-weight: 500;
-        cursor: pointer;
         box-shadow: 0 6px 15px rgba(15,23,42,0.08);
     }
     div[data-testid="stButton"][id^="top-btn-"] > button:hover {
         background: #f3f4f6;
     }
 
-    /* Page header (title) */
-    .rtc-page-header {
-        margin-bottom: 0.8rem;
-    }
+    /* Page title */
     .rtc-page-title {
         font-size: 1.35rem;
         font-weight: 600;
         margin-bottom: 0.05rem;
         color: #111827;
     }
-    .rtc-page-subtitle {
+    .rtc-page-sub {
         font-size: 0.82rem;
         color: #6b7280;
+        margin-bottom: 0.7rem;
     }
 
-    /* KPI stat cards */
+    /* KPI buttons */
     div[data-testid="stButton"][id^="stat-card-"] > button {
         width: 100%;
         text-align: left;
@@ -657,11 +635,11 @@ st.markdown(
         box-shadow: 0 14px 28px rgba(37,99,235,0.3);
     }
     div[data-testid="stButton"][id^="stat-card-"] > button:hover {
-        box-shadow: 0 18px 38px rgba(37,99,235,0.38);
+        box-shadow: 0 18px 36px rgba(37,99,235,0.38);
         transform: translateY(-1px);
     }
 
-    /* DataFrame / tables */
+    /* Tables */
     .stDataFrame, .stTable {
         border-radius: 0.8rem;
         border: 1px solid #e5e7eb;
@@ -686,66 +664,58 @@ if "search_query" not in st.session_state:
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
 
-# ---------- TOP BAR ---------- #
-st.markdown('<div class="rtc-topbar"><div class="rtc-topbar-row">', unsafe_allow_html=True)
+# ---------- HEADER (single aligned row) ---------- #
+with st.container():
+    st.markdown('<div class="rtc-header">', unsafe_allow_html=True)
+    col_left, col_mid, col_right = st.columns([3, 4, 3])
 
-# left: brand
-col_brand, col_dummy, col_buttons = st.columns([5, 5, 3])
-
-with col_brand:
-    st.markdown(
-        """
-        <div class="rtc-brand-block">
-            <div class="rtc-logo">R</div>
-            <div>
-                <div class="rtc-brand-text-main">RTC League Asset Management</div>
-                <div class="rtc-brand-text-sub">
-                    Fixed Asset Dashboard for tracking allocation, stock, and equipment performance.
+    with col_left:
+        # Brand block
+        st.markdown(
+            """
+            <div style="display:flex;align-items:center;">
+                <div class="rtc-logo">R</div>
+                <div>
+                    <div class="rtc-header-title">RTC League Asset Management</div>
+                    <div class="rtc-header-sub">
+                        Fixed Asset Dashboard for tracking allocation, stock, and equipment performance.
+                    </div>
                 </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+            """,
+            unsafe_allow_html=True,
+        )
 
-with col_dummy:
-    st.markdown('<div class="rtc-search-wrap">', unsafe_allow_html=True)
-    st.markdown('<span class="rtc-search-icon">🔍</span>', unsafe_allow_html=True)
-    q = st.text_input(
-        "Search assets",
-        value=st.session_state["search_query"],
-        label_visibility="collapsed",
-        key="top-search",
-        placeholder="Search by asset ID or name",
-    )
-    st.session_state["search_query"] = q
+    with col_mid:
+        st.markdown('<div class="rtc-search-wrapper">', unsafe_allow_html=True)
+        st.markdown('<div class="rtc-search-icon">🔍</div>', unsafe_allow_html=True)
+        q = st.text_input(
+            "Search assets",
+            value=st.session_state["search_query"],
+            label_visibility="collapsed",
+            key="top-search",
+            placeholder="Search by asset ID or name",
+        )
+        st.session_state["search_query"] = q
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col_right:
+        b1, b2 = st.columns(2)
+        with b1:
+            if st.button("List of Assets", key="top-btn-assets"):
+                st.session_state["nav_menu"] = "Assets"
+                st.rerun()
+        with b2:
+            if st.button("Add Asset", key="top-btn-add"):
+                st.session_state["nav_menu"] = "Add Asset"
+                st.rerun()
+
     st.markdown("</div>", unsafe_allow_html=True)
 
-with col_buttons:
-    st.markdown('<div class="rtc-top-buttons">', unsafe_allow_html=True)
-    b1, b2 = st.columns(2)
-    with b1:
-        if st.button("List of Assets", key="top-btn-assets"):
-            st.session_state["nav_menu"] = "Assets"
-            st.rerun()
-    with b2:
-        if st.button("Add Asset", key="top-btn-add"):
-            st.session_state["nav_menu"] = "Add Asset"
-            st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("</div></div>", unsafe_allow_html=True)
-
-# ---------- PAGE HEADER ---------- #
+# ---------- PAGE TITLE ---------- #
+st.markdown('<div class="rtc-page-title">Fixed Asset Management Dashboard</div>', unsafe_allow_html=True)
 st.markdown(
-    """
-    <div class="rtc-page-header">
-        <div class="rtc-page-title">Fixed Asset Management Dashboard</div>
-        <div class="rtc-page-subtitle">
-            Overview of asset purchases, allocations, and stock positions across RTC League.
-        </div>
-    </div>
-    """,
+    '<div class="rtc-page-sub">Overview of asset purchases, allocations, and stock positions across RTC League.</div>',
     unsafe_allow_html=True,
 )
 
