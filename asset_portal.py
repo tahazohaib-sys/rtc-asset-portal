@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
-Aligned light corporate dashboard theme
+Clean light dashboard layout.
 """
 
 import os
@@ -119,7 +119,6 @@ def parse_date_str(s: str | None) -> date | None:
 # ---------------------- SNAPSHOT LOGIC ---------------------- #
 
 def get_snapshot(conn: sqlite3.Connection) -> pd.DataFrame:
-    """Builds a snapshot similar to Asset_Snapshot sheet."""
     assets = pd.read_sql_query("SELECT * FROM assets_master", conn)
     if assets.empty:
         return pd.DataFrame(
@@ -254,7 +253,6 @@ def get_laptops_in_stock(snapshot: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_search_filter(df: pd.DataFrame, query: str) -> pd.DataFrame:
-    """Filter by asset_id or asset_name containing query (case-insensitive)."""
     q = (query or "").strip().lower()
     if not q or df.empty:
         return df
@@ -474,7 +472,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------- GLOBAL THEME (LIGHT, BLUE, CLEAN) ---------- #
+# ---------- GLOBAL THEME ---------- #
 st.markdown(
     """
     <style>
@@ -488,6 +486,17 @@ st.markdown(
         padding-top: 0.8rem;
         padding-bottom: 1.5rem;
         max-width: 1200px;
+    }
+
+    /* Hide ANY old glass top bar if it still exists */
+    .rtc-topbar-glass { display: none !important; }
+
+    /* Reset any old black KPI buttons (stat-card-*) to white */
+    div[data-testid="stButton"][id^="stat-card-"] > button {
+        background: #ffffff !important;
+        color: #111827 !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: 0 12px 26px rgba(15,23,42,0.08) !important;
     }
 
     /* Sidebar */
@@ -535,7 +544,7 @@ st.markdown(
     }
 
     /* Header white bar */
-    .rtc-header {
+    .rtc-header-box {
         background: #ffffff;
         border-radius: 0.9rem;
         padding: 1.0rem 1.2rem;
@@ -543,7 +552,7 @@ st.markdown(
         box-shadow: 0 14px 30px rgba(15,23,42,0.08);
         border: 1px solid #e5e7eb;
     }
-    .rtc-logo {
+    .rtc-logo-small {
         width: 28px;
         height: 28px;
         border-radius: 7px;
@@ -566,29 +575,18 @@ st.markdown(
         color: #6b7280;
     }
 
-    /* Search */
-    .rtc-search-wrapper {
+    /* Search in header */
+    .rtc-search-wrap input[type="text"] {
         width: 100%;
-    }
-    .rtc-search-wrapper input[type="text"] {
-        width: 100%;
-        padding: 0.45rem 0.9rem 0.45rem 2.2rem;
+        padding: 0.45rem 0.9rem;
         border-radius: 999px;
         border: 1px solid #d1d5db;
         background: #ffffff !important;
         color: #111827 !important;
         font-size: 0.83rem;
     }
-    .rtc-search-wrapper input[type="text"]::placeholder {
+    .rtc-search-wrap input[type="text"]::placeholder {
         color: #9ca3af !important;
-    }
-    .rtc-search-icon {
-        position: relative;
-        left: 0.75rem;
-        top: 1.9rem;
-        font-size: 0.8rem;
-        color: #9ca3af;
-        pointer-events: none;
     }
 
     /* Header buttons */
@@ -607,7 +605,7 @@ st.markdown(
         background: #f3f4f6 !important;
     }
 
-    /* Page title */
+    /* Page title & subtitle */
     .rtc-page-title {
         font-size: 1.35rem;
         font-weight: 600;
@@ -620,8 +618,8 @@ st.markdown(
         margin-bottom: 0.7rem;
     }
 
-    /* KPI cards (stat buttons) */
-    div[data-testid="stButton"][id^="stat-card-"] > button {
+    /* NEW KPI cards (kpi-*) */
+    div[data-testid="stButton"][id^="kpi-"] > button {
         width: 100%;
         text-align: left;
         white-space: pre-line;
@@ -634,7 +632,7 @@ st.markdown(
         font-weight: 500;
         box-shadow: 0 12px 26px rgba(15,23,42,0.08);
     }
-    div[data-testid="stButton"][id^="stat-card-"] > button:hover {
+    div[data-testid="stButton"][id^="kpi-"] > button:hover {
         box-shadow: 0 16px 32px rgba(15,23,42,0.14);
         transform: translateY(-1px);
     }
@@ -664,17 +662,17 @@ if "search_query" not in st.session_state:
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
 
-# ---------- HEADER (single white bar) ---------- #
+# ---------- HEADER (one white bar) ---------- #
 with st.container():
-    st.markdown('<div class="rtc-header">', unsafe_allow_html=True)
+    st.markdown('<div class="rtc-header-box">', unsafe_allow_html=True)
     col_left, col_mid, col_right = st.columns([3, 4, 3])
 
-    # LEFT: title at top-left
+    # LEFT: title top-left
     with col_left:
         st.markdown(
             """
             <div style="display:flex;align-items:flex-start;">
-                <div class="rtc-logo">R</div>
+                <div class="rtc-logo-small">R</div>
                 <div>
                     <div class="rtc-header-title">RTC League Asset Management</div>
                     <div class="rtc-header-sub">
@@ -686,10 +684,9 @@ with st.container():
             unsafe_allow_html=True,
         )
 
-    # MIDDLE: search bar
+    # MIDDLE: search
     with col_mid:
-        st.markdown('<div class="rtc-search-wrapper">', unsafe_allow_html=True)
-        st.markdown('<div class="rtc-search-icon">🔍</div>', unsafe_allow_html=True)
+        st.markdown('<div class="rtc-search-wrap">', unsafe_allow_html=True)
         q = st.text_input(
             "Search assets",
             value=st.session_state["search_query"],
@@ -700,7 +697,7 @@ with st.container():
         st.session_state["search_query"] = q
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # RIGHT: two buttons aligned
+    # RIGHT: buttons
     with col_right:
         b1, b2 = st.columns(2)
         with b1:
@@ -714,7 +711,7 @@ with st.container():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ---------- PAGE TITLE ---------- #
+# ---------- PAGE HEADER ---------- #
 st.markdown('<div class="rtc-page-title">Fixed Asset Management Dashboard</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="rtc-page-sub">Overview of asset purchases, allocations, and stock positions across RTC League.</div>',
@@ -736,23 +733,23 @@ if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
     card_clicked = None
 
-    # four KPI cards in one row: label on first line, number on second
+    # KPI cards with label and value
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         text = f"Total Assets\n{stats['total_assets']:,}"
-        if st.button(text, key="stat-card-total-assets"):
+        if st.button(text, key="kpi-total-assets"):
             card_clicked = "all"
     with c2:
         text = f"Total Asset Amount\n{stats['total_amount']:,.0f}"
-        if st.button(text, key="stat-card-total-amount"):
+        if st.button(text, key="kpi-total-amount"):
             card_clicked = "all"
     with c3:
         text = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
-        if st.button(text, key="stat-card-allocated"):
+        if st.button(text, key="kpi-allocated"):
             card_clicked = "allocated"
     with c4:
         text = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
-        if st.button(text, key="stat-card-stock"):
+        if st.button(text, key="kpi-stock"):
             card_clicked = "stock"
 
     if card_clicked:
