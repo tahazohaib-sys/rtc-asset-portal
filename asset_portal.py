@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 RTC League - Asset Management Portal (Python + Streamlit + SQLite)
-Clean light dashboard layout.
+Clean, aligned dashboard layout (UI v2).
 """
 
 import os
@@ -62,7 +62,7 @@ def init_db(conn: sqlite3.Connection):
         """
     )
 
-    # Employees (simple master)
+    # Employees
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS employees (
@@ -472,7 +472,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------- GLOBAL THEME ---------- #
+# ---------- GLOBAL THEME (generic CSS, robust selectors) ---------- #
 st.markdown(
     """
     <style>
@@ -488,43 +488,26 @@ st.markdown(
         max-width: 1200px;
     }
 
-    /* Hide ANY old glass top bar if it still exists */
-    .rtc-topbar-glass { display: none !important; }
-
-    /* Reset any old black KPI buttons (stat-card-*) to white */
-    div[data-testid="stButton"][id^="stat-card-"] > button {
-        background: #ffffff !important;
-        color: #111827 !important;
-        border: 1px solid #d1d5db !important;
-        box-shadow: 0 12px 26px rgba(15,23,42,0.08) !important;
-    }
-
     /* Sidebar */
     section[data-testid="stSidebar"] {
         background: #ffffff !important;
         border-right: 1px solid #e5e7eb;
         box-shadow: 4px 0 18px rgba(15,23,42,0.04);
     }
-    section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h1 {
+    section[data-testid="stSidebar"] h2 {
         font-size: 0.8rem !important;
         text-transform: uppercase;
         letter-spacing: .08em;
         color: #6b7280 !important;
     }
-    section[data-testid="stSidebar"] input[type="radio"] {
-        visibility: hidden;
-        width: 0;
-        height: 0;
-        margin: 0;
-        padding: 0;
-    }
+    /* Make radio options look like cards */
     section[data-testid="stSidebar"] div[role="radiogroup"] > label {
-        display: flex;
+        display: flex !important;
         align-items: center;
-        gap: 0.45rem;
-        padding: 0.45rem 0.75rem;
-        margin-bottom: 0.25rem;
-        border-radius: 0.7rem;
+        gap: 0.5rem;
+        padding: 0.5rem 0.8rem;
+        margin-bottom: 0.3rem;
+        border-radius: 0.8rem;
         cursor: pointer;
         border: 1px solid transparent;
         transition: all 0.15s ease-out;
@@ -547,7 +530,7 @@ st.markdown(
     .rtc-header-box {
         background: #ffffff;
         border-radius: 0.9rem;
-        padding: 1.0rem 1.2rem;
+        padding: 0.9rem 1.1rem;
         margin-bottom: 1.0rem;
         box-shadow: 0 14px 30px rgba(15,23,42,0.08);
         border: 1px solid #e5e7eb;
@@ -589,20 +572,21 @@ st.markdown(
         color: #9ca3af !important;
     }
 
-    /* Header buttons */
-    div[data-testid="stButton"][id^="top-btn-"] > button {
+    /* Top header buttons */
+    div[data-testid="stButton"] > button {
         width: 100%;
-        padding: 0.45rem 0.75rem;
         border-radius: 999px;
         border: 1px solid #d1d5db !important;
         background: #ffffff !important;
         color: #111827 !important;
         font-size: 0.83rem;
         font-weight: 500;
+        padding: 0.45rem 0.8rem;
         box-shadow: 0 6px 15px rgba(15,23,42,0.08);
     }
-    div[data-testid="stButton"][id^="top-btn-"] > button:hover {
+    div[data-testid="stButton"] > button:hover {
         background: #f3f4f6 !important;
+        box-shadow: 0 10px 22px rgba(15,23,42,0.12);
     }
 
     /* Page title & subtitle */
@@ -618,23 +602,16 @@ st.markdown(
         margin-bottom: 0.7rem;
     }
 
-    /* NEW KPI cards (kpi-*) */
-    div[data-testid="stButton"][id^="kpi-"] > button {
-        width: 100%;
+    /* KPI card container – use columns in python, this just styles buttons when used as cards */
+    .kpi-card > div[data-testid="stButton"] > button {
         text-align: left;
         white-space: pre-line;
         padding: 0.9rem 1.0rem;
-        border-radius: 0.8rem;
+        border-radius: 0.9rem;
+        box-shadow: 0 12px 26px rgba(15,23,42,0.12);
         border: 1px solid #d1d5db !important;
         background: #ffffff !important;
-        color: #111827 !important;
-        font-size: 0.85rem;
-        font-weight: 500;
-        box-shadow: 0 12px 26px rgba(15,23,42,0.08);
-    }
-    div[data-testid="stButton"][id^="kpi-"] > button:hover {
-        box-shadow: 0 16px 32px rgba(15,23,42,0.14);
-        transform: translateY(-1px);
+        font-size: 0.86rem;
     }
 
     /* Tables */
@@ -646,6 +623,7 @@ st.markdown(
     }
 
     hr { border-color: #e5e7eb; }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -667,7 +645,7 @@ with st.container():
     st.markdown('<div class="rtc-header-box">', unsafe_allow_html=True)
     col_left, col_mid, col_right = st.columns([3, 4, 3])
 
-    # LEFT: title top-left
+    # LEFT: title + version
     with col_left:
         st.markdown(
             """
@@ -676,7 +654,7 @@ with st.container():
                 <div>
                     <div class="rtc-header-title">RTC League Asset Management</div>
                     <div class="rtc-header-sub">
-                        Fixed Asset Dashboard for tracking allocation, stock, and equipment performance.
+                        Fixed Asset Dashboard • UI v2
                     </div>
                 </div>
             </div>
@@ -697,15 +675,15 @@ with st.container():
         st.session_state["search_query"] = q
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # RIGHT: buttons
+    # RIGHT: header buttons
     with col_right:
         b1, b2 = st.columns(2)
         with b1:
-            if st.button("List of Assets", key="top-btn-assets"):
+            if st.button("List of Assets", key="btn-assets"):
                 st.session_state["nav_menu"] = "Assets"
                 st.rerun()
         with b2:
-            if st.button("Add Asset", key="top-btn-add"):
+            if st.button("Add Asset", key="btn-add"):
                 st.session_state["nav_menu"] = "Add Asset"
                 st.rerun()
 
@@ -733,24 +711,36 @@ if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
     card_clicked = None
 
-    # KPI cards with label and value
+    # KPI cards – wrapped in containers with class "kpi-card" so CSS picks them up
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        text = f"Total Assets\n{stats['total_assets']:,}"
-        if st.button(text, key="kpi-total-assets"):
-            card_clicked = "all"
+        with st.container():
+            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+            text = f"Total Assets\n{stats['total_assets']:,}"
+            if st.button(text, key="kpi-total-assets"):
+                card_clicked = "all"
+            st.markdown("</div>", unsafe_allow_html=True)
     with c2:
-        text = f"Total Asset Amount\n{stats['total_amount']:,.0f}"
-        if st.button(text, key="kpi-total-amount"):
-            card_clicked = "all"
+        with st.container():
+            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+            text = f"Total Asset Amount\n{stats['total_amount']:,.0f}"
+            if st.button(text, key="kpi-total-amount"):
+                card_clicked = "all"
+            st.markdown("</div>", unsafe_allow_html=True)
     with c3:
-        text = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
-        if st.button(text, key="kpi-allocated"):
-            card_clicked = "allocated"
+        with st.container():
+            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+            text = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
+            if st.button(text, key="kpi-allocated"):
+                card_clicked = "allocated"
+            st.markdown("</div>", unsafe_allow_html=True)
     with c4:
-        text = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
-        if st.button(text, key="kpi-stock"):
-            card_clicked = "stock"
+        with st.container():
+            st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+            text = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
+            if st.button(text, key="kpi-stock"):
+                card_clicked = "stock"
+            st.markdown("</div>", unsafe_allow_html=True)
 
     if card_clicked:
         st.session_state["dashboard_view"] = card_clicked
