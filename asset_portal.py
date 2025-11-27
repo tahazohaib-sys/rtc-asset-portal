@@ -528,41 +528,41 @@ st.markdown(
         border-color: #c7d2fe;
     }
     section[data-testid="stSidebar"] div[role="radiogroup"] > label[aria-checked="true"] {
-        background: #2563eb;
-        border-color: #1d4ed8;
+        background: #111827 !important;
+        border-color: #111827 !important;
         color: #f9fafb !important;
-        box-shadow: 0 8px 18px rgba(37,99,235,0.35);
+        box-shadow: 0 8px 18px rgba(15,23,42,0.35);
     }
 
-    /* Header container */
+    /* Header white bar */
     .rtc-header {
         background: #ffffff;
         border-radius: 0.9rem;
-        padding: 0.9rem 1.1rem;
-        margin-bottom: 0.9rem;
-        box-shadow: 0 10px 25px rgba(15,23,42,0.06);
+        padding: 1.0rem 1.2rem;
+        margin-bottom: 1.0rem;
+        box-shadow: 0 14px 30px rgba(15,23,42,0.08);
         border: 1px solid #e5e7eb;
     }
     .rtc-logo {
-        width: 26px;
-        height: 26px;
-        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
         background: linear-gradient(135deg,#2563eb,#4f46e5);
         display:flex;
         align-items:center;
         justify-content:center;
         color:white;
-        font-size:0.9rem;
+        font-size:0.95rem;
         font-weight:600;
         margin-right:0.55rem;
     }
     .rtc-header-title {
-        font-size: 0.95rem;
+        font-size: 1.0rem;
         font-weight: 600;
         color: #111827;
     }
     .rtc-header-sub {
-        font-size: 0.75rem;
+        font-size: 0.78rem;
         color: #6b7280;
     }
 
@@ -572,20 +572,20 @@ st.markdown(
     }
     .rtc-search-wrapper input[type="text"] {
         width: 100%;
-        padding: 0.35rem 0.9rem 0.35rem 2.1rem;
+        padding: 0.45rem 0.9rem 0.45rem 2.2rem;
         border-radius: 999px;
         border: 1px solid #d1d5db;
-        background: #f9fafb;
-        color: #111827;
-        font-size: 0.8rem;
+        background: #ffffff !important;
+        color: #111827 !important;
+        font-size: 0.83rem;
     }
     .rtc-search-wrapper input[type="text"]::placeholder {
-        color: #9ca3af;
+        color: #9ca3af !important;
     }
     .rtc-search-icon {
         position: relative;
-        left: 0.55rem;
-        top: 1.7rem;
+        left: 0.75rem;
+        top: 1.9rem;
         font-size: 0.8rem;
         color: #9ca3af;
         pointer-events: none;
@@ -594,17 +594,17 @@ st.markdown(
     /* Header buttons */
     div[data-testid="stButton"][id^="top-btn-"] > button {
         width: 100%;
-        padding: 0.35rem 0.75rem;
+        padding: 0.45rem 0.75rem;
         border-radius: 999px;
-        border: 1px solid #d1d5db;
-        background: #ffffff;
-        color: #111827;
-        font-size: 0.8rem;
+        border: 1px solid #d1d5db !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        font-size: 0.83rem;
         font-weight: 500;
         box-shadow: 0 6px 15px rgba(15,23,42,0.08);
     }
     div[data-testid="stButton"][id^="top-btn-"] > button:hover {
-        background: #f3f4f6;
+        background: #f3f4f6 !important;
     }
 
     /* Page title */
@@ -620,22 +620,22 @@ st.markdown(
         margin-bottom: 0.7rem;
     }
 
-    /* KPI buttons */
+    /* KPI cards (stat buttons) */
     div[data-testid="stButton"][id^="stat-card-"] > button {
         width: 100%;
         text-align: left;
         white-space: pre-line;
-        padding: 0.85rem 1.0rem;
+        padding: 0.9rem 1.0rem;
         border-radius: 0.8rem;
-        border: 1px solid #e5e7eb !important;
-        background: #2563eb !important;
-        color: #f9fafb !important;
-        font-size: 0.9rem;
+        border: 1px solid #d1d5db !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        font-size: 0.85rem;
         font-weight: 500;
-        box-shadow: 0 14px 28px rgba(37,99,235,0.3);
+        box-shadow: 0 12px 26px rgba(15,23,42,0.08);
     }
     div[data-testid="stButton"][id^="stat-card-"] > button:hover {
-        box-shadow: 0 18px 36px rgba(37,99,235,0.38);
+        box-shadow: 0 16px 32px rgba(15,23,42,0.14);
         transform: translateY(-1px);
     }
 
@@ -664,16 +664,16 @@ if "search_query" not in st.session_state:
 if "dashboard_view" not in st.session_state:
     st.session_state["dashboard_view"] = "none"
 
-# ---------- HEADER (single aligned row) ---------- #
+# ---------- HEADER (single white bar) ---------- #
 with st.container():
     st.markdown('<div class="rtc-header">', unsafe_allow_html=True)
     col_left, col_mid, col_right = st.columns([3, 4, 3])
 
+    # LEFT: title at top-left
     with col_left:
-        # Brand block
         st.markdown(
             """
-            <div style="display:flex;align-items:center;">
+            <div style="display:flex;align-items:flex-start;">
                 <div class="rtc-logo">R</div>
                 <div>
                     <div class="rtc-header-title">RTC League Asset Management</div>
@@ -686,6 +686,7 @@ with st.container():
             unsafe_allow_html=True,
         )
 
+    # MIDDLE: search bar
     with col_mid:
         st.markdown('<div class="rtc-search-wrapper">', unsafe_allow_html=True)
         st.markdown('<div class="rtc-search-icon">🔍</div>', unsafe_allow_html=True)
@@ -699,6 +700,7 @@ with st.container():
         st.session_state["search_query"] = q
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # RIGHT: two buttons aligned
     with col_right:
         b1, b2 = st.columns(2)
         with b1:
@@ -734,22 +736,23 @@ if menu == "Dashboard":
     stats = get_dashboard_stats(snapshot_df)
     card_clicked = None
 
+    # four KPI cards in one row: label on first line, number on second
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        label = f"Total Assets\n{stats['total_assets']:,}"
-        if st.button(label, key="stat-card-total-assets"):
+        text = f"Total Assets\n{stats['total_assets']:,}"
+        if st.button(text, key="stat-card-total-assets"):
             card_clicked = "all"
     with c2:
-        label = f"Total Assets Amount\n{stats['total_amount']:,.0f}"
-        if st.button(label, key="stat-card-total-amount"):
+        text = f"Total Asset Amount\n{stats['total_amount']:,.0f}"
+        if st.button(text, key="stat-card-total-amount"):
             card_clicked = "all"
     with c3:
-        label = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
-        if st.button(label, key="stat-card-allocated"):
+        text = f"Total Allocated Laptops\n{stats['total_allocated_laptops']:,}"
+        if st.button(text, key="stat-card-allocated"):
             card_clicked = "allocated"
     with c4:
-        label = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
-        if st.button(label, key="stat-card-stock"):
+        text = f"Laptops in Stock\n{stats['laptops_in_stock']:,}"
+        if st.button(text, key="stat-card-stock"):
             card_clicked = "stock"
 
     if card_clicked:
